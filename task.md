@@ -31,9 +31,12 @@
 - [x] 4.7 Viết `scripts/test_auth_isolation.py`: Kiểm thử bảo mật Admin, cách ly Tenant, Revoke key.
 
 ### Pha 5: Frontend Web App / Dashboard
-- [ ] 5.1 Khởi tạo giao diện UI bằng React/TypeScript
-- [ ] 5.2 Xây dựng màn hình quản lý Documents & API keys cho Tenant
-- [ ] 5.3 Thiết kế widget chat UI nhúng ngoài web, giao tiếp với API `/query` (hỗ trợ streaming)
+- [x] 5.1 Khởi tạo dự án Vite (React + TS) và cài đặt `lucide-react`, `axios`, `react-markdown`.
+- [x] 5.2 Thiết lập Design System (Vanilla CSS): Cấu hình biến màu, typography, khoảng cách, micro-animations tại `index.css`.
+- [x] 5.3 Xây dựng `services/api.ts` kết nối với FastAPI (Admin, Ingest, Chat). Cấu hình Proxy Vite.
+- [x] 5.4 Xây dựng `AdminPage.tsx`: Giao diện Admin quản lý Tenant và API Keys.
+- [x] 5.5 Xây dựng `TenantDashboard.tsx`: Giao diện khách hàng (Nhập API Key, Upload tài liệu).
+- [x] 5.6 Xây dựng Chat Widget: Hỗ trợ streaming SSE, parse Markdown, hiển thị sources.
 
 ### Pha 6: Tối ưu hóa & Triển khai (Optimization & Deploy)
 - [ ] 6.1 Tối ưu hóa RAG (Reranking Cross-Encoder, Hybrid Search, Caching các câu query phổ biến)
