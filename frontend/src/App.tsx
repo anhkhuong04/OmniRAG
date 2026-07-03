@@ -1,8 +1,9 @@
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, Outlet } from 'react-router-dom';
 import AdminPage from './pages/AdminPage';
 import TenantDashboard from './pages/TenantDashboard';
+import LandingPage from './pages/LandingPage';
 
-function App() {
+function DashboardLayout() {
   return (
     <>
       <header style={{ 
@@ -22,21 +23,31 @@ function App() {
           }}>
             O
           </div>
-          <h2 style={{ fontSize: '18px', margin: 0 }}>OmniRAG</h2>
+          <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>
+            <h2 style={{ fontSize: '18px', margin: 0 }}>OmniRAG</h2>
+          </Link>
         </div>
         <nav style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
-          <Link to="/" style={{ color: 'var(--text-body)', fontWeight: 500 }} className="transition-colors">Tenant Dashboard</Link>
+          <Link to="/dashboard" style={{ color: 'var(--text-body)', fontWeight: 500 }} className="transition-colors">Tenant Dashboard</Link>
           <Link to="/admin" style={{ color: 'var(--text-body)', fontWeight: 500 }} className="transition-colors">Admin Panel</Link>
         </nav>
       </header>
-
       <main className="main-content">
-        <Routes>
-          <Route path="/" element={<TenantDashboard />} />
-          <Route path="/admin" element={<AdminPage />} />
-        </Routes>
+        <Outlet />
       </main>
     </>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route element={<DashboardLayout />}>
+        <Route path="/dashboard" element={<TenantDashboard />} />
+        <Route path="/admin" element={<AdminPage />} />
+      </Route>
+    </Routes>
   );
 }
 
