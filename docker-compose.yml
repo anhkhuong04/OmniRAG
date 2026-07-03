@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: omnirag_api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Ghi đè URL kết nối bên trong mạng Docker
+      - POSTGRES_URL=postgresql+asyncpg://postgres:postgres@db:5432/omnirag
+      - QDRANT_URL=http://qdrant:6333
+    depends_on:
+      - db
+      - qdrant
+    volumes:
+      # Mount code để live reload khi đang code (development)
+      - ./backend:/app/backend
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+
+  db:
+    image: postgres:15-alpine
+    container_name: omnirag_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: omnirag
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: omnirag_qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+volumes:
+  postgres_data:
+  qdrant_data:

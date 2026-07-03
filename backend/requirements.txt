@@ -3,5 +3,7 @@ uvicorn
 sqlmodel
 pydantic-settings
 langchain
+langchain-text-splitters
 qdrant-client
 openai
+asyncpg

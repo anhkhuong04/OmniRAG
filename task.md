@@ -5,18 +5,21 @@
 ### Pha 1: Khởi tạo & Kiến trúc nền tảng (Foundation)
 - [x] 1.1 Khởi tạo dự án, thiết lập overview.md & cấu hình Agent (.agents/AGENTS.md)
 - [x] 1.2 Khởi tạo cấu trúc thư mục FastAPI theo Clean Architecture & cài đặt môi trường
-- [ ] 1.3 Thiết kế chi tiết Data Model (Postgres schema) cho `tenants`, `documents`, `api_keys`
+- [x] 1.3 Thiết kế chi tiết Data Model (Postgres schema) cho `tenants`, `documents`, `api_keys`
 
 ### Pha 2: Thử nghiệm RAG Core bằng Script (Chưa viết API)
-- [ ] 2.1 Viết script logic Chunking (Text Splitting) và sinh Embedding
-- [ ] 2.2 Viết script lưu trữ vector vào Qdrant (với metadata filter `tenant_id` phục vụ cô lập dữ liệu)
-- [ ] 2.3 Viết script truy vấn thử nghiệm (Similarity Search + Tenant Filtering)
+- [x] 2.1 Viết script logic Chunking (Text Splitting) và sinh Embedding
+- [x] 2.2 Viết script lưu trữ vector vào Qdrant (với metadata filter `tenant_id` phục vụ cô lập dữ liệu)
+- [x] 2.3 Viết script truy vấn thử nghiệm (Similarity Search + Tenant Filtering)
 - [ ] 2.4 Viết Unit Test cho cấu phần Chunking, Embedding và Retrieval để chạy liên tục
 
-### Pha 3: Xây dựng API Layer (FastAPI Wrapper) & Mock Auth
-- [ ] 3.1 Bọc lõi Ingestion thành API endpoint `/ingest` (nhận tài liệu, xử lý lưu Postgres & Qdrant)
-- [ ] 3.2 Bọc lõi Query thành API endpoint `/query` (truy vấn dữ liệu, hỗ trợ streaming response)
-- [ ] 3.3 Viết Integration Test cho các API endpoint (giả lập hardcode `tenant_id` để kiểm thử logic API)
+### Pha 3: Xây dựng API Layer & Cơ sở dữ liệu (Postgres + FastAPI)
+- [x] 3.1 Khởi tạo kết nối Database (Postgres AsyncEngine) và cơ chế tự động sinh bảng.
+- [x] 3.2 Định nghĩa Pydantic Schemas (Request/Response) cho API (DocumentUpload, Query, ChatHistory...).
+- [x] 3.3 Viết Dependencies (FastAPI `Depends`) cung cấp DB Session và Mock Auth (lấy `tenant_id` từ HTTP Header).
+- [x] 3.4 Bọc lõi Ingestion thành API endpoint `POST /documents/ingest` (Lưu siêu dữ liệu vào Postgres -> Nạp Vector vào Qdrant).
+- [x] 3.5 Bọc lõi Query thành API endpoint `POST /chat/query` (Lưu lịch sử hội thoại vào Postgres -> RAG -> Trả về kết quả).
+- [x] 3.6 Tích hợp Routers vào `main.py` và viết Integration Test giả lập gọi API để kiểm tra toàn bộ luồng.
 
 ### Pha 4: Hoàn thiện Authentication & Cách ly Tenant thực tế
 - [ ] 4.1 Xây dựng hệ thống bảo mật Auth (API Key / HMAC Webhook)
