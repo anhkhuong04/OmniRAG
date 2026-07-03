@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routes import chat, documents
+from backend.api.routes import admin, chat, documents
 from backend.core.database import create_db_and_tables
 from backend.services.vector_service import vector_service
 
@@ -34,6 +34,7 @@ app.add_middleware(
 )
 
 # Include Routers
+app.include_router(admin.router)
 app.include_router(documents.router)
 app.include_router(chat.router)
 

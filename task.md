@@ -22,9 +22,13 @@
 - [x] 3.6 Tích hợp Routers vào `main.py` và viết Integration Test giả lập gọi API để kiểm tra toàn bộ luồng.
 
 ### Pha 4: Hoàn thiện Authentication & Cách ly Tenant thực tế
-- [ ] 4.1 Xây dựng hệ thống bảo mật Auth (API Key / HMAC Webhook)
-- [ ] 4.2 Viết Middleware/Dependency tự động giải mã credentials để trích xuất và inject `tenant_id` vào request state
-- [ ] 4.3 Viết Integration Test kiểm tra tính cách ly dữ liệu (Tenant A tuyệt đối không đọc được dữ liệu Tenant B)
+- [x] 4.1 Tạo `backend/core/security.py`: Hàm sinh API Key và băm SHA-256.
+- [x] 4.2 Cập nhật `backend/core/config.py`: Thêm biến `ADMIN_SECRET_KEY`.
+- [x] 4.3 Viết lại `backend/api/dependencies.py`: Xác thực qua `Authorization: Bearer`, truy vấn DB, check `is_active`. Thêm `verify_admin_key` với `secrets.compare_digest()`.
+- [x] 4.4 Tạo `backend/schemas/admin.py`: Pydantic schema cho Tenant và APIKey.
+- [x] 4.5 Tạo `backend/api/routes/admin.py`: Endpoints tạo Tenant, tạo APIKey, Revoke APIKey.
+- [x] 4.6 Cập nhật `backend/main.py`: Tích hợp router admin.
+- [x] 4.7 Viết `scripts/test_auth_isolation.py`: Kiểm thử bảo mật Admin, cách ly Tenant, Revoke key.
 
 ### Pha 5: Frontend Web App / Dashboard
 - [ ] 5.1 Khởi tạo giao diện UI bằng React/TypeScript

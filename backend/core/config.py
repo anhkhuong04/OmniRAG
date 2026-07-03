@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     CHUNK_OVERLAP: int = 120
     RAG_TOP_K: int = 5  # Number of context chunks to retrieve per query
 
+    # --- Admin Security ---
+    # IMPORTANT: Set a strong random value in .env for production.
+    # Generate one with: python -c "import secrets; print(secrets.token_hex(32))"
+    ADMIN_SECRET_KEY: str = "change-me-in-production"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
