@@ -30,6 +30,15 @@ class Settings(BaseSettings):
     # Generate one with: python -c "import secrets; print(secrets.token_hex(32))"
     ADMIN_SECRET_KEY: str = "change-me-in-production"
 
+    # --- JWT Authentication ---
+    # Secret key used to sign JWTs. Must be changed in production.
+    JWT_SECRET_KEY: str = "jwt-change-me-in-production"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    # Email verification OTP time-to-live (minutes)
+    EMAIL_VERIFY_TOKEN_TTL_MINUTES: int = 30
+
     # --- Reranking ---
     # Options: "none", "flashrank", "cohere"
     RERANKER_TYPE: str = "none"

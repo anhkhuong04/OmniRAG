@@ -5,6 +5,7 @@ from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
     from backend.models.tenant import Tenant
+    from backend.models.usage_log import UsageLog
 
 
 class APIKey(SQLModel, table=True):
@@ -32,3 +33,4 @@ class APIKey(SQLModel, table=True):
 
     # Relationships
     tenant: "Tenant" = Relationship(back_populates="api_keys")
+    usage_logs: list["UsageLog"] = Relationship(back_populates="api_key")

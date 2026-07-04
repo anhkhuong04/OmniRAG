@@ -4,30 +4,52 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-# ----------------------------------------------------------------
-# Requests
-# ----------------------------------------------------------------
+# ─── Requests ─────────────────────────────────────────────────────────────────
+
 
 class DocumentIngestRequest(BaseModel):
     """Payload for ingesting a document via raw text."""
-    filename: str = Field(..., description="Tên file hoặc tiêu đề tài liệu")
-    text: str = Field(..., description="Nội dung văn bản cần nạp vào hệ thống")
-    metadata: Optional[dict] = Field(default=None, description="Metadata bổ sung cho tài liệu")
 
-# ----------------------------------------------------------------
-# Responses
-# ----------------------------------------------------------------
+    filename: str = Field(..., description="Document title or original filename")
+    text: str = Field(..., description="Raw text content to be chunked and embedded")
+    metadata: Optional[dict] = Field(default=None, description="Optional extra metadata per chunk")
 
-class DocumentResponse(BaseModel):
-    """Response returned when a document is created or retrieved."""
+
+# ─── Responses ────────────────────────────────────────────────────────────────
+
+
+class DocumentStatusResponse(BaseModel):
+    """Full status representation of a document, including processing progress."""
+
     id: uuid.UUID
     tenant_id: uuid.UUID
     filename: str
-    status: str
+    file_type: str
+    status: str          # "pending" | "processing" | "completed" | "failed"
     chunk_count: int
+    content_hash: Optional[str]
+    error_message: Optional[str]
     created_at: datetime.datetime
     updated_at: datetime.datetime
 
     class Config:
         from_attributes = True
 
+
+class DocumentIngestResponse(BaseModel):
+    """Returned immediately (202 Accepted) after queuing the ingestion background task."""
+
+    document_id: uuid.UUID
+    status: str = "pending"
+    message: str = "Document queued for processing. Poll /documents/{id}/status for updates."
+
+
+class DocumentListResponse(BaseModel):
+    """Paginated list of documents for a tenant."""
+
+    items: list[DocumentStatusResponse]
+    total: int
+
+
+# Keep backward-compatible alias
+DocumentResponse = DocumentStatusResponse

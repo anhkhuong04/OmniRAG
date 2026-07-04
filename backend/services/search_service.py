@@ -153,19 +153,15 @@ class HybridSearchService:
             A list of chunk dicts compatible with the format from VectorService.
         """
         # SECURITY: tenant_id must always be in WHERE clause — use parameterized query
-        sql = text("""
-            SELECT
-                dc.text,
-                dc.chunk_index,
-                dc.document_id::text,
-                dc.source,
-                ts_rank(to_tsvector('english', dc.text), plainto_tsquery('english', :query)) AS score
-            FROM document_chunks dc
-            WHERE dc.tenant_id = :tenant_id::uuid
-              AND to_tsvector('english', dc.text) @@ plainto_tsquery('english', :query)
-            ORDER BY score DESC
-            LIMIT :limit
-        """)
+        sql = text(
+            "SELECT dc.text, dc.chunk_index, dc.document_id::text, dc.source, "
+            "ts_rank(to_tsvector('english', dc.text), plainto_tsquery('english', :query)) AS score "
+            "FROM document_chunks dc "
+            "WHERE dc.tenant_id = CAST(:tenant_id AS uuid) "
+            "AND to_tsvector('english', dc.text) @@ plainto_tsquery('english', :query) "
+            "ORDER BY score DESC "
+            "LIMIT :limit"
+        )
 
         try:
             result = await session.execute(
@@ -189,6 +185,8 @@ class HybridSearchService:
 
         except Exception as e:
             logger.warning("Postgres FTS failed for tenant='%s': %s. Returning empty list.", tenant_id, e)
+            # Rollback the aborted transaction so the session is usable again
+            await session.rollback()
             return []
 
 

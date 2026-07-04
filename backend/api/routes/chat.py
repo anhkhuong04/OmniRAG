@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import uuid
@@ -7,11 +8,13 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
-from backend.api.dependencies import DBSessionDep, TenantIDDep
+from backend.api.dependencies import DBSessionDep, TenantContextDep
 from backend.models.conversation import Conversation
 from backend.models.message import Message
+from backend.models.usage_log import UsageLog, UsageLogType
 from backend.schemas.chat import ChatResponse, QueryRequest
 from backend.services.rag_service import rag_service
+from backend.services import plan_guard_service
 
 logger = logging.getLogger(__name__)
 
@@ -21,28 +24,33 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 @router.post("/query")
 async def chat_query(
     request: QueryRequest,
-    tenant_id_str: TenantIDDep,
+    ctx: TenantContextDep,
     session: DBSessionDep,
 ):
     """
     Truy vấn hệ thống Advanced RAG. Hỗ trợ Server-Sent Events (SSE) để streaming.
     Tích hợp Semantic Cache, Hybrid Search, Reranking, và Token Tracking.
     """
-    tenant_id = uuid.UUID(tenant_id_str)
+    tenant_id = ctx.tenant_id
+    api_key_id = ctx.api_key_id
+    tenant_uuid = uuid.UUID(tenant_id)
+
+    # Pre-flight: check monthly query quota before any expensive work
+    await plan_guard_service.check_query_limit(session, tenant_id)
 
     # 1. Quản lý Conversation
     if request.conversation_id:
         result = await session.execute(
             select(Conversation).where(
                 Conversation.id == request.conversation_id,
-                Conversation.tenant_id == tenant_id,
+                Conversation.tenant_id == tenant_uuid,
             )
         )
         conversation = result.scalar_one_or_none()
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation not found")
     else:
-        conversation = Conversation(id=uuid.uuid4(), tenant_id=tenant_id)
+        conversation = Conversation(id=uuid.uuid4(), tenant_id=tenant_uuid)
         session.add(conversation)
         await session.commit()
         await session.refresh(conversation)
@@ -51,7 +59,7 @@ async def chat_query(
     user_message = Message(
         id=uuid.uuid4(),
         conversation_id=conversation.id,
-        tenant_id=tenant_id,
+        tenant_id=tenant_uuid,
         sender="user",
         content=request.query,
     )
@@ -96,7 +104,24 @@ async def chat_query(
                     cost_usd=cost_usd,
                 )
                 session.add(ai_message)
+                
+                # Write usage log and increment quota counter
+                usage_log = UsageLog(
+                    tenant_id=tenant_uuid,
+                    api_key_id=uuid.UUID(api_key_id),
+                    log_type=UsageLogType.QUERY,
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                    cost_usd=cost_usd,
+                )
+                session.add(usage_log)
                 await session.commit()
+
+                asyncio.create_task(
+                    plan_guard_service.increment_query_counter(
+                        db=session, tenant_id=tenant_id
+                    )
+                )
 
                 if usage_data:
                     yield f"event: usage\ndata: {json.dumps(usage_data)}\n\n"
@@ -112,29 +137,53 @@ async def chat_query(
         # Non-streaming path
         try:
             result_data = await rag_service.generate_answer(
-                tenant_id=str(tenant_id),
+                tenant_id=tenant_id,
                 query=request.query,
                 db_session=session,
             )
 
+            prompt_tokens = result_data.get("prompt_tokens") or 0
+            completion_tokens = result_data.get("completion_tokens") or 0
+            cost_usd = result_data.get("cost_usd") or 0.0
+
             ai_message = Message(
                 id=uuid.uuid4(),
                 conversation_id=conversation.id,
-                tenant_id=tenant_id,
+                tenant_id=tenant_uuid,
                 sender="assistant",
                 content=result_data["answer"],
-                prompt_tokens=result_data.get("prompt_tokens"),
-                completion_tokens=result_data.get("completion_tokens"),
-                cost_usd=result_data.get("cost_usd"),
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                cost_usd=cost_usd,
             )
             session.add(ai_message)
             await session.commit()
+
+            # Write usage log and increment quota counter (non-blocking)
+            usage_log = UsageLog(
+                tenant_id=tenant_uuid,
+                api_key_id=uuid.UUID(api_key_id),
+                log_type=UsageLogType.QUERY,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                cost_usd=cost_usd,
+            )
+            session.add(usage_log)
+            await session.commit()
+
+            asyncio.create_task(
+                plan_guard_service.increment_query_counter(
+                    db=session, tenant_id=tenant_id
+                )
+            )
 
             return ChatResponse(
                 conversation_id=conversation.id,
                 answer=result_data["answer"],
                 sources=result_data["sources"],
             )
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error("Error generating answer: %s", e)
             raise HTTPException(status_code=500, detail=str(e))

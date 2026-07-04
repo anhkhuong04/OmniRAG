@@ -1,0 +1,10 @@
+<svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OmniRAG mark">
+  <path d="M 57.67 39.82 A 22 22 0 0 1 32.18 57.67"
+        fill="none" stroke="#4338CA" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 26.70 55.94 A 22 22 0 0 1 15.33 28.48"
+        fill="none" stroke="#7C3AED" stroke-width="5" stroke-linecap="round"/>
+  <path d="M 19.15 21.86 A 22 22 0 0 1 39.82 14.33"
+        fill="none" stroke="#A78BFA" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="36" cy="36" r="7" fill="#312E81"/>
+  <circle cx="38.6" cy="33.2" r="2" fill="#22D3EE"/>
+</svg>

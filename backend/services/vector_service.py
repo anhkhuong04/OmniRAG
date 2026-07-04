@@ -73,15 +73,19 @@ class VectorService:
             texts: A list of text strings to embed.
 
         Returns:
-            A list of embedding vectors (each vector is a list of floats).
+            A tuple containing:
+                - A list of embedding vectors (each vector is a list of floats).
+                - Total prompt_tokens used for this embedding batch.
         """
         response = await self._openai.embeddings.create(
             model=settings.EMBEDDING_MODEL,
             input=texts,
         )
         vectors = [item.embedding for item in response.data]
-        logger.debug("Generated %d embeddings using model '%s'.", len(vectors), settings.EMBEDDING_MODEL)
-        return vectors
+        prompt_tokens = response.usage.prompt_tokens if response.usage else 0
+        
+        logger.debug("Generated %d embeddings using model '%s' (tokens: %d).", len(vectors), settings.EMBEDDING_MODEL, prompt_tokens)
+        return vectors, prompt_tokens
 
     async def upsert_chunks(
         self,
@@ -98,16 +102,19 @@ class VectorService:
             chunks: A list of text chunk strings to be embedded and stored.
             metadata_list: A list of dicts (one per chunk) containing extra metadata
                            (e.g., page_number, source filename).
+                           
+        Returns:
+            The number of prompt_tokens used for embeddings.
         """
         if not chunks:
             logger.warning("upsert_chunks called with an empty chunk list. Skipping.")
-            return
+            return 0
 
         logger.info(
             "Generating embeddings for %d chunks (tenant='%s', document='%s')...",
             len(chunks), tenant_id, document_id,
         )
-        vectors = await self.get_embeddings(chunks)
+        vectors, prompt_tokens = await self.get_embeddings(chunks)
 
         points = [
             qdrant_models.PointStruct(
@@ -126,9 +133,10 @@ class VectorService:
 
         await self._qdrant.upsert(collection_name=self._collection, points=points)
         logger.info(
-            "Upserted %d vectors into collection '%s' for tenant='%s'.",
-            len(points), self._collection, tenant_id,
+            "Upserted %d vectors into collection '%s' for tenant='%s' (tokens=%d).",
+            len(points), self._collection, tenant_id, prompt_tokens
         )
+        return prompt_tokens
 
     async def search_similar_chunks(
         self,
@@ -151,7 +159,8 @@ class VectorService:
             from the matched vector's payload.
         """
         top_k = limit or settings.RAG_TOP_K
-        query_vector = (await self.get_embeddings([query]))[0]
+        vectors, _ = await self.get_embeddings([query])
+        query_vector = vectors[0]
 
         # MANDATORY tenant isolation filter — never remove this filter
         tenant_filter = qdrant_models.Filter(

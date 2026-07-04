@@ -1,406 +1,754 @@
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ArrowRight, 
-  UploadCloud, 
-  Settings, 
-  MessageSquare, 
-  FileText, 
-  Globe, 
-  Layers, 
-  Lock, 
-  Users, 
-  BarChart, 
+  Menu,
   CheckCircle2,
-  FileDigit,
-  SearchX,
+  FileText,
+  MessageSquare,
+  BarChart,
+  Settings,
+  User,
+  Send,
+  Database,
+  Search,
+  BrainCircuit,
+  ShieldCheck,
+  UploadCloud,
+  Globe,
+  Layers,
   Bot,
-  AlertTriangle,
-  File,
-  FileSpreadsheet
+  Braces,
+  Layout,
+  Lock,
+  LineChart,
+  Check
 } from 'lucide-react';
 
 export default function LandingPage() {
+  const [activeTab, setActiveTab] = useState('Customer Support');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
-    <div style={{ backgroundColor: '#fafafa', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ backgroundColor: 'var(--color-bg)', minHeight: '100vh' }}>
       
-      {/* 1. Navbar */}
-      <nav style={{ 
-        position: 'sticky', top: 0, zIndex: 50, 
-        backgroundColor: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid var(--border-color)',
-        height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'center'
-      }}>
-        <div style={{ width: '100%', maxWidth: '1180px', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* 1. Header / Navbar */}
+      <nav className="header">
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{
-              width: '32px', height: '32px', borderRadius: '8px', 
-              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', fontWeight: 'bold'
-            }}>O</div>
-            <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-header)' }}>OmniRAG</span>
+            <img src="/logo.svg" alt="OmniRAG Logo" style={{ width: '32px', height: '32px' }} />
+            <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-text-main)' }}>OmniRAG</span>
           </div>
 
-          <div style={{ display: 'none', gap: '32px', color: 'var(--text-body)', fontWeight: 500, fontSize: '14px' }} className="nav-links">
-            <a href="#features" className="hover-lift">Product</a>
-            <a href="#features" className="hover-lift">Features</a>
-            <a href="#use-cases" className="hover-lift">Use Cases</a>
-            <a href="#pricing" className="hover-lift">Pricing</a>
-            <a href="#" className="hover-lift">Docs</a>
-            <a href="#" className="hover-lift">Blog</a>
+          <div style={{ display: 'flex', gap: '32px', color: 'var(--color-text-main)', fontWeight: 500, fontSize: '14px' }} className="hidden-mobile">
+            <a href="#product">Product ▼</a>
+            <a href="#solutions">Solutions ▼</a>
+            <a href="#resources">Resources ▼</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#docs">Docs</a>
+            <a href="#company">Company ▼</a>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Link to="/dashboard" style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-body)' }}>Log in</Link>
-            <Link to="/dashboard" className="btn bg-gradient hover-lift" style={{ borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontWeight: 500, border: 'none' }}>
-              Start Free
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }} className="hidden-mobile">
+            <Link to="/login" style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-main)' }}>Log in</Link>
+            <Link to="/login" className="btn-primary" style={{ padding: '10px 16px', fontSize: '14px' }}>
+              Start Free &rarr;
             </Link>
           </div>
+
+          <div className="mobile-menu-btn" style={{ display: 'none' }}>
+            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+              <Menu />
+            </button>
+          </div>
+          
         </div>
       </nav>
       
-      <style>{`
-        @media (min-width: 768px) { .nav-links { display: flex !important; } }
-        .hero-grid { display: grid; grid-template-columns: 1fr; gap: 40px; align-items: center; }
-        @media (min-width: 992px) { .hero-grid { grid-template-columns: 1fr 1fr; gap: 60px; } }
-        .grid-4 { display: grid; grid-template-columns: 1fr; gap: 24px; }
-        @media (min-width: 768px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
-        @media (min-width: 1024px) { .grid-4 { grid-template-columns: repeat(4, 1fr); } }
-        .grid-3 { display: grid; grid-template-columns: 1fr; gap: 24px; }
-        @media (min-width: 768px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
-      `}</style>
-
-      {/* Main Content Wrapper */}
-      <main style={{ maxWidth: '1180px', margin: '0 auto', padding: '0 24px' }}>
-
-        {/* 2. Hero Section */}
-        <section className="hero-grid" style={{ paddingTop: '100px', paddingBottom: '80px' }}>
+      {/* 2. Hero Section */}
+      <section className="section" style={{ paddingTop: '100px', paddingBottom: '60px' }}>
+        <div className="container hero-grid">
           <div>
-            <div className="badge-pill" style={{ marginBottom: '24px' }}>✨ AI POWERED RAG PLATFORM</div>
-            <h1 style={{ fontSize: 'clamp(40px, 5vw, 56px)', lineHeight: 1.1, marginBottom: '24px', letterSpacing: '-0.02em' }}>
-              Turn Your Documents Into an <br className="hidden-mobile" />
-              <span className="text-gradient">AI Knowledge</span> Assistant
+            <div className="small-label">AI-POWERED RAG PLATFORM</div>
+            <h1 className="hero-title" style={{ marginBottom: '24px' }}>
+              Your Knowledge.<br/>
+              <span className="text-gradient">Grounded</span> AI Answers.
             </h1>
-            <p style={{ fontSize: '18px', color: 'var(--text-body)', marginBottom: '40px', maxWidth: '500px', lineHeight: 1.6 }}>
-              Upload your docs, connect data sources, and let AI answer questions based on your data with accurate citations.
+            <p className="body-text" style={{ marginBottom: '40px', maxWidth: '500px' }}>
+              Connect your documents, websites, and business data. Deploy AI assistants that answer with verified sources and zero guesswork.
             </p>
             <div style={{ display: 'flex', gap: '16px', marginBottom: '32px', flexWrap: 'wrap' }}>
-              <Link to="/dashboard" className="btn bg-gradient hover-lift" style={{ padding: '14px 28px', fontSize: '16px', border: 'none', borderRadius: '8px' }}>
-                Start Free <ArrowRight size={18} style={{ marginLeft: '8px' }} />
+              <Link to="/login" className="btn-primary">
+                Start Free &rarr;
               </Link>
-              <button className="btn btn-outline hover-lift" style={{ padding: '14px 28px', fontSize: '16px', borderRadius: '8px' }}>
+              <button className="btn-secondary">
                 Book a Demo
               </button>
             </div>
-            <div style={{ display: 'flex', gap: '24px', fontSize: '14px', color: 'var(--text-body)' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle2 size={16} color="#10b981"/> No credit card</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle2 size={16} color="#10b981"/> Setup in minutes</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle2 size={16} color="#10b981"/> Cancel anytime</span>
+            <div style={{ display: 'flex', gap: '24px', fontSize: '14px', color: 'var(--color-text-muted)', fontWeight: 500, flexWrap: 'wrap' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={16} color="var(--color-text-main)"/> No credit card</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={16} color="var(--color-text-main)"/> Setup in minutes</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={16} color="var(--color-text-main)"/> Cancel anytime</span>
             </div>
           </div>
 
-          <div style={{ position: 'relative' }}>
-            <div className="glass-card" style={{ padding: '24px', backgroundColor: 'white' }}>
-              <div style={{ display: 'flex', gap: '16px', height: '400px' }}>
-                {/* Mock Sidebar */}
-                <div style={{ width: '140px', borderRight: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-header)' }}>Acme Corp KB</div>
-                  <button style={{ backgroundColor: '#f1f5f9', border: 'none', padding: '6px', borderRadius: '6px', fontSize: '12px', color: '#3b82f6', fontWeight: 500 }}>+ New Chat</button>
-                  <div style={{ fontSize: '10px', color: 'var(--text-body)', marginTop: '8px' }}>Today</div>
-                  <div style={{ fontSize: '12px', color: 'var(--accent-primary)', backgroundColor: '#f0fdf4', padding: '4px 8px', borderRadius: '4px' }}>Refund policy</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-body)', padding: '4px 8px' }}>SLA agreement</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-body)', padding: '4px 8px' }}>Product roadmap</div>
+          {/* Hero Product Mockup */}
+          <div className="mockup" style={{ display: 'flex', height: '480px' }}>
+            {/* Sidebar */}
+            <div className="hidden-mobile" style={{ width: '160px', backgroundColor: '#F8FAFC', borderRight: '1px solid var(--color-border)', padding: '16px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '24px' }}>Acme Corp &darr;</div>
+              <button style={{ backgroundColor: 'white', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '8px', fontSize: '12px', fontWeight: 600, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '24px' }}>
+                + New Chat
+              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-primary)', backgroundColor: '#EFF6FF', padding: '8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <MessageSquare size={14} /> Chat
                 </div>
-                {/* Mock Main Chat */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ alignSelf: 'flex-end', backgroundColor: '#f1f5f9', padding: '12px', borderRadius: '12px 12px 0 12px', fontSize: '13px', maxWidth: '80%' }}>
-                      What is the refund policy for enterprise plans?
-                    </div>
-                    <div style={{ alignSelf: 'flex-start', border: '1px solid var(--border-color)', padding: '12px', borderRadius: '12px 12px 12px 0', fontSize: '13px', maxWidth: '90%' }}>
-                      Customers on Enterprise plans are eligible for a full refund within 30 days of purchase, provided they have not exceeded 50% of their monthly usage limit.<br/><br/>
-                      <span style={{ fontSize: '11px', color: 'var(--text-body)', fontWeight: 600 }}>Sources:</span><br/>
-                      <div style={{ fontSize: '11px', padding: '4px 8px', backgroundColor: '#f8fafc', borderRadius: '4px', marginTop: '4px', border: '1px solid #e2e8f0' }}>1. Refund Policy - Acme Corp.pdf (p. 2)</div>
-                    </div>
-                  </div>
-                  <div style={{ marginTop: '16px', position: 'relative' }}>
-                    <input type="text" disabled placeholder="Ask a follow-up question..." style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px' }} />
-                    <SendIcon style={{ position: 'absolute', right: '12px', top: '10px', color: '#3b82f6', width: '16px' }} />
-                  </div>
+                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-muted)', padding: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FileText size={14} /> Sources
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-muted)', padding: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Database size={14} /> Datasets
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-muted)', padding: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <BarChart size={14} /> Analytics
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-muted)', padding: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Settings size={14} /> Settings
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
+                <div style={{ width: '24px', height: '24px', borderRadius: '12px', backgroundColor: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={12}/></div>
+                <div style={{ fontSize: '11px', lineHeight: 1.2 }}>
+                  <div style={{ fontWeight: 600 }}>Jane Doe</div>
+                  <div style={{ color: 'var(--color-text-light)' }}>Admin</div>
                 </div>
               </div>
             </div>
-            {/* Floating Icons */}
-            <div style={{ position: 'absolute', right: '-20px', top: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div className="glass-card" style={{ padding: '12px', color: '#ef4444' }}><File size={24} /></div>
-              <div className="glass-card" style={{ padding: '12px', color: '#3b82f6' }}><FileText size={24} /></div>
-              <div className="glass-card" style={{ padding: '12px', color: '#10b981' }}><FileSpreadsheet size={24} /></div>
-            </div>
-          </div>
-        </section>
-
-        {/* 3. Trusted By */}
-        <section style={{ textAlign: 'center', padding: '60px 0', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)' }}>
-          <p style={{ fontSize: '14px', color: 'var(--text-body)', marginBottom: '32px', fontWeight: 500 }}>Trusted by modern teams at</p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '48px', flexWrap: 'wrap', opacity: 0.6, filter: 'grayscale(100%)' }}>
-            <span style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-1px' }}>Linear</span>
-            <span style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-1px' }}>▲ Vercel</span>
-            <span style={{ fontSize: '24px', fontWeight: 800 }}>Notion</span>
-            <span style={{ fontSize: '24px', fontWeight: 800 }}>Lark</span>
-            <span style={{ fontSize: '24px', fontWeight: 800 }}>Retool</span>
-            <span style={{ fontSize: '24px', fontWeight: 800 }}>Scale</span>
-          </div>
-        </section>
-
-        {/* 4. Problem Section */}
-        <section style={{ padding: '100px 0', textAlign: 'center' }}>
-          <div className="badge-pill" style={{ marginBottom: '16px' }}>THE PROBLEM</div>
-          <h2 style={{ fontSize: '36px', marginBottom: '48px' }}>Knowledge is <span className="text-gradient">everywhere</span>,<br/>answers are not.</h2>
-          <div className="grid-4 text-left">
-            <div className="feature-card">
-              <div style={{ backgroundColor: '#fef2f2', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', color: '#ef4444' }}><FileDigit size={24} /></div>
-              <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>Scattered data</h3>
-              <p style={{ color: 'var(--text-body)', fontSize: '15px' }}>Documents live in drives, wikis, emails, and databases.</p>
-            </div>
-            <div className="feature-card">
-              <div style={{ backgroundColor: '#fff7ed', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', color: '#f97316' }}><SearchX size={24} /></div>
-              <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>Hard to find</h3>
-              <p style={{ color: 'var(--text-body)', fontSize: '15px' }}>Teams waste time searching instead of getting work done.</p>
-            </div>
-            <div className="feature-card">
-              <div style={{ backgroundColor: '#f3e8ff', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', color: '#a855f7' }}><Bot size={24} /></div>
-              <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>AI doesn't know</h3>
-              <p style={{ color: 'var(--text-body)', fontSize: '15px' }}>ChatGPT and others don't have access to your private data.</p>
-            </div>
-            <div className="feature-card">
-              <div style={{ backgroundColor: '#f1f5f9', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', color: '#64748b' }}><AlertTriangle size={24} /></div>
-              <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>No reliable source</h3>
-              <p style={{ color: 'var(--text-body)', fontSize: '15px' }}>Answers without citations lead to mistakes and risk.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* 5. Solution Section */}
-        <section style={{ padding: '60px 0 100px', textAlign: 'center' }}>
-          <div className="badge-pill" style={{ marginBottom: '16px' }}>THE SOLUTION</div>
-          <h2 style={{ fontSize: '36px', marginBottom: '64px' }}>Your data. <span className="text-gradient">AI answers.</span><br/>Accurate and trusted.</h2>
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', flexWrap: 'wrap', gap: '32px' }}>
-            {/* Dotted line for desktop */}
-            <div style={{ position: 'absolute', top: '32px', left: '10%', right: '10%', height: '2px', borderTop: '2px dashed #cbd5e1', zIndex: 0 }} className="hidden-mobile"></div>
             
-            <div style={{ flex: '1 1 200px', position: 'relative', zIndex: 1, backgroundColor: '#fafafa', padding: '0 16px' }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', border: '1px solid #bfdbfe' }}><UploadCloud size={32} /></div>
-              <h3 style={{ fontSize: '18px', marginBottom: '8px' }}>1. Ingest</h3>
-              <p style={{ color: 'var(--text-body)', fontSize: '14px' }}>Upload files or connect any data source.</p>
+            {/* Main Chat Panel */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '24px', backgroundColor: 'white' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px', overflowY: 'hidden' }}>
+                <div style={{ alignSelf: 'flex-end', backgroundColor: '#F1F5F9', padding: '12px 16px', borderRadius: '12px 12px 0 12px', fontSize: '13px', fontWeight: 500 }}>
+                  What is the refund policy for enterprise plans?
+                </div>
+                <div style={{ alignSelf: 'flex-start', fontSize: '13px', lineHeight: 1.6, maxWidth: '90%' }}>
+                  Enterprise customers are eligible for a full refund within 30 days of purchase, provided they have not exceeded 80% of their monthly usage limit.
+                  
+                  <div style={{ marginTop: '16px', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '16px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '12px' }}>Sources (3)</div>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F1F5F9' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-primary)' }}><FileText size={14}/> Refund Policy - Acme Corp.pdf</div>
+                      <div style={{ display: 'flex', gap: '16px', color: 'var(--color-text-muted)', fontSize: '11px' }}><span>p. 3</span> <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>96%</span></div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F1F5F9' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-primary)' }}><FileText size={14}/> Terms of Service - Acme Corp.pdf</div>
+                      <div style={{ display: 'flex', gap: '16px', color: 'var(--color-text-muted)', fontSize: '11px' }}><span>p. 7</span> <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>87%</span></div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-primary)' }}><FileText size={14}/> Enterprise Agreement.docx</div>
+                      <div style={{ display: 'flex', gap: '16px', color: 'var(--color-text-muted)', fontSize: '11px' }}><span>p. 12</span> <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>81%</span></div>
+                    </div>
+                    
+                    <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--color-primary)', fontWeight: 500 }}>
+                      View retrieved chunks &rarr;
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ position: 'relative', marginTop: '16px' }}>
+                <input type="text" placeholder="Ask a follow-up question..." disabled style={{ width: '100%', padding: '14px 16px', borderRadius: '12px', border: '1px solid var(--color-border)', fontSize: '13px', backgroundColor: '#F8FAFC' }} />
+                <Send size={16} color="var(--color-text-muted)" style={{ position: 'absolute', right: '16px', top: '14px' }} />
+              </div>
             </div>
             
-            <div style={{ flex: '1 1 200px', position: 'relative', zIndex: 1, backgroundColor: '#fafafa', padding: '0 16px' }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', border: '1px solid #bfdbfe' }}><Layers size={32} /></div>
-              <h3 style={{ fontSize: '18px', marginBottom: '8px' }}>2. Process</h3>
-              <p style={{ color: 'var(--text-body)', fontSize: '14px' }}>We chunk, embed, and index your data.</p>
+            {/* Right Details Panel */}
+            <div className="hidden-mobile" style={{ width: '200px', backgroundColor: '#F8FAFC', borderLeft: '1px solid var(--color-border)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '16px' }}>Answer details</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '12px' }}>
+                  <span style={{ color: 'var(--color-text-muted)' }}>Sources used</span>
+                  <span style={{ fontWeight: 600 }}>3</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '12px' }}>
+                  <span style={{ color: 'var(--color-text-muted)' }}>Chunks retrieved</span>
+                  <span style={{ fontWeight: 600 }}>8</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--color-text-muted)' }}>Confidence</span>
+                  <span style={{ fontWeight: 600, color: 'var(--color-success)', display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{width:'6px', height:'6px', borderRadius:'3px', backgroundColor:'var(--color-success)'}}></div> High</span>
+                </div>
+              </div>
+              
+              <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', fontSize: '11px' }}>
+                <div style={{ fontWeight: 700, marginBottom: '8px' }}>Grounded in your data</div>
+                <div style={{ color: 'var(--color-text-muted)', lineHeight: 1.5, marginBottom: '8px' }}>
+                  AI answers are generated only from your connected knowledge sources.
+                </div>
+                <div style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Learn more &rarr;</div>
+              </div>
             </div>
-
-            <div style={{ flex: '1 1 200px', position: 'relative', zIndex: 1, backgroundColor: '#fafafa', padding: '0 16px' }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', border: '1px solid #bfdbfe' }}><MessageSquare size={32} /></div>
-              <h3 style={{ fontSize: '18px', marginBottom: '8px' }}>3. Ask</h3>
-              <p style={{ color: 'var(--text-body)', fontSize: '14px' }}>Ask anything in natural language.</p>
-            </div>
-
-            <div style={{ flex: '1 1 200px', position: 'relative', zIndex: 1, backgroundColor: '#fafafa', padding: '0 16px' }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', border: '1px solid #bfdbfe' }}><FileText size={32} /></div>
-              <h3 style={{ fontSize: '18px', marginBottom: '8px' }}>4. Get answers</h3>
-              <p style={{ color: 'var(--text-body)', fontSize: '14px' }}>AI replies with accurate answers and citations.</p>
-            </div>
+            
           </div>
-        </section>
-
-        {/* 6. Features Section */}
-        <section id="features" style={{ padding: '100px 0', borderTop: '1px solid var(--border-color)' }}>
-          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-            <div className="badge-pill" style={{ marginBottom: '16px' }}>FEATURES</div>
-            <h2 style={{ fontSize: '36px' }}>Everything you need for a <span className="text-gradient">powerful</span><br/>RAG experience</h2>
-          </div>
-          
-          <div className="grid-4">
-            <FeatureItem icon={<FileText size={20}/>} title="Document Upload" desc="Import PDF, DOCX, TXT, CSV and more." color="#3b82f6" />
-            <FeatureItem icon={<Globe size={20}/>} title="Website Crawler" desc="Crawl and extract content from any website." color="#10b981" />
-            <FeatureItem icon={<MessageSquare size={20}/>} title="AI Chat with Citations" desc="Get answers with sources from your documents." color="#8b5cf6" />
-            <FeatureItem icon={<Layers size={20}/>} title="Multi-workspace" desc="Organize knowledge bases for teams and projects." color="#f43f5e" />
-            <FeatureItem icon={<Settings size={20}/>} title="API Access" desc="Integrate with your apps using our REST API." color="#f59e0b" />
-            <FeatureItem icon={<Lock size={20}/>} title="Security & Privacy" desc="Your data is encrypted and never used for training." color="#14b8a6" />
-            <FeatureItem icon={<Users size={20}/>} title="Team Collaboration" desc="Invite members and set roles & permissions." color="#0ea5e9" />
-            <FeatureItem icon={<BarChart size={20}/>} title="Analytics Dashboard" desc="Track usage, popular questions and more." color="#d946ef" />
-          </div>
-        </section>
-
-        {/* 7. Use Cases Section */}
-        <section id="use-cases" style={{ padding: '100px 0', textAlign: 'center', borderTop: '1px solid var(--border-color)' }}>
-          <div className="badge-pill" style={{ marginBottom: '16px' }}>USE CASES</div>
-          <h2 style={{ fontSize: '36px', marginBottom: '48px' }}><span className="text-gradient">Built</span> for every team and industry</h2>
-          
-          <div className="grid-3 text-left">
-            <UseCaseCard title="Customer Support" desc="Answer customer questions from help docs in seconds." icon="🎧" />
-            <UseCaseCard title="HR & People Ops" desc="Instantly find policies, handbooks, and HR information." icon="👥" />
-            <UseCaseCard title="Legal" desc="Search contracts, NDAs, and legal documents with confidence." icon="⚖️" />
-            <UseCaseCard title="Education" desc="Help students and teachers get answers from course materials." icon="📚" />
-            <UseCaseCard title="Sales Enablement" desc="Find product info, competitive intel, and pitch docs fast." icon="💼" />
-            <UseCaseCard title="Internal Knowledge" desc="Centralize company knowledge and boost team productivity." icon="🧠" />
-          </div>
-          <div style={{ marginTop: '32px' }}>
-            <a href="#" style={{ color: '#3b82f6', fontWeight: 500 }}>Explore all use cases →</a>
-          </div>
-        </section>
-
-        {/* 8. Pricing Section */}
-        <section id="pricing" style={{ padding: '100px 0', borderTop: '1px solid var(--border-color)', textAlign: 'center' }}>
-          <div className="badge-pill" style={{ marginBottom: '16px' }}>PRICING</div>
-          <h2 style={{ fontSize: '36px', marginBottom: '24px' }}>Simple, <span className="text-gradient">transparent</span> pricing</h2>
-          
-          <div style={{ display: 'inline-flex', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '12px', marginBottom: '48px' }}>
-            <button style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--text-body)' }}>Monthly</button>
-            <button style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 600, backgroundColor: 'white', color: '#3b82f6', boxShadow: 'var(--shadow-sm)' }}>Yearly <span style={{ color: '#10b981', fontSize: '12px' }}>Save 20%</span></button>
-          </div>
-
-          <div className="grid-4 text-left">
-            <PricingCard title="Free" subtitle="For individuals getting started" price="$0" features={["1 Workspace", "50 Documents", "100 Questions / month", "Basic AI Models"]} cta="Get Started" outline />
-            <PricingCard title="Pro" subtitle="For small teams" price="$29" features={["3 Workspaces", "5,000 Documents", "10,000 Questions / month", "Advanced AI Models", "Priority Support"]} cta="Start Free Trial" isPro />
-            <PricingCard title="Business" subtitle="For growing companies" price="$99" features={["Unlimited Workspaces", "25,000 Documents", "50,000 Questions / month", "API Access", "Analytics Dashboard", "Team Management"]} cta="Start Free Trial" outline />
-            <PricingCard title="Enterprise" subtitle="For large organizations" price="Custom" isCustom features={["Everything in Business", "SSO / SAML", "Private Deployment", "Dedicated Support", "Custom SLAs"]} cta="Contact Sales" outline />
-          </div>
-          
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '32px', fontSize: '14px', color: 'var(--text-body)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle2 size={16} color="#cbd5e1"/> No credit card required</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle2 size={16} color="#cbd5e1"/> 14-day free trial</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle2 size={16} color="#cbd5e1"/> Cancel anytime</span>
-          </div>
-        </section>
-
-      </main>
-
-      {/* 9. Final CTA */}
-      <section className="bg-gradient" style={{ padding: '80px 24px', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '36px', marginBottom: '16px' }}>Ready to transform your knowledge into answers?</h2>
-        <p style={{ fontSize: '18px', opacity: 0.9, marginBottom: '40px' }}>Start building your AI knowledge assistant today.</p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <Link to="/dashboard" className="btn hover-lift" style={{ backgroundColor: 'white', color: '#3b82f6', padding: '14px 28px', fontSize: '16px', borderRadius: '8px' }}>
-            Start Free <ArrowRight size={18} style={{ marginLeft: '8px' }} />
-          </Link>
-          <button className="btn hover-lift" style={{ border: '1px solid rgba(255,255,255,0.4)', backgroundColor: 'transparent', color: 'white', padding: '14px 28px', fontSize: '16px', borderRadius: '8px' }}>
-            Book a Demo
-          </button>
         </div>
       </section>
 
-      {/* 10. Footer */}
-      <footer style={{ backgroundColor: 'white', borderTop: '1px solid var(--border-color)', padding: '80px 24px 40px' }}>
-        <div style={{ maxWidth: '1180px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: '60px', justifyContent: 'space-between' }}>
-          <div style={{ maxWidth: '300px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '12px' }}>O</div>
-              <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-header)' }}>OmniRAG</span>
+      {/* 3. Trusted Logos */}
+      <section style={{ padding: '40px 0', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)', textAlign: 'center' }}>
+        <div className="container">
+          <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', fontWeight: 500, marginBottom: '24px' }}>Trusted by teams at</p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(24px, 5vw, 64px)', flexWrap: 'wrap', filter: 'grayscale(100%)', opacity: 0.6, fontSize: '24px', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--color-text-main)' }}>
+            <span>Linear</span>
+            <span>▲ Vercel</span>
+            <span>Notion</span>
+            <span>Lark</span>
+            <span>Retool</span>
+            <span>Scale</span>
+            <span>Brex</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Problem Chain */}
+      <section className="section" style={{ backgroundColor: 'var(--color-bg-soft)', textAlign: 'center' }}>
+        <div className="container">
+          <div className="small-label">THE PROBLEM</div>
+          <h2 className="section-title" style={{ marginBottom: '64px' }}>
+            Knowledge is <span className="text-gradient">everywhere</span>, answers are not.
+          </h2>
+          
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '16px', alignItems: 'stretch', overflowX: 'auto', paddingBottom: '16px' }} className="problem-chain-mobile">
+            {/* Mobile Stack adjustment could be done via grid in CSS, but flex wrap works ok if space is tight. For pure horizontal scroll, flex-row is fine. */}
+            <div className="card" style={{ flex: '1', minWidth: '240px', textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#EFF6FF', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}><Database size={24}/></div>
+              <h3 className="card-title" style={{ marginBottom: '12px' }}>Scattered data</h3>
+              <p className="body-text">Information lives in drives, wikis, emails, and databases.</p>
             </div>
-            <p style={{ color: 'var(--text-body)', fontSize: '14px', lineHeight: 1.6, marginBottom: '24px' }}>
-              The RAG platform that connects your data with AI to deliver accurate, trusted answers.
+            <div style={{ display: 'flex', alignItems: 'center', color: 'var(--color-text-light)' }} className="hidden-mobile">&rarr;</div>
+            
+            <div className="card" style={{ flex: '1', minWidth: '240px', textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#FFF7ED', color: 'var(--color-warning)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}><Search size={24}/></div>
+              <h3 className="card-title" style={{ marginBottom: '12px' }}>Hard to find</h3>
+              <p className="body-text">Teams waste time searching instead of getting work done.</p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', color: 'var(--color-text-light)' }} className="hidden-mobile">&rarr;</div>
+            
+            <div className="card" style={{ flex: '1', minWidth: '240px', textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#F3E8FF', color: 'var(--color-purple)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}><BrainCircuit size={24}/></div>
+              <h3 className="card-title" style={{ marginBottom: '12px' }}>AI doesn't know</h3>
+              <p className="body-text">LLMs don't have access to your private, up-to-date data.</p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', color: 'var(--color-text-light)' }} className="hidden-mobile">&rarr;</div>
+            
+            <div className="card" style={{ flex: '1', minWidth: '240px', textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#FEF2F2', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}><ShieldCheck size={24}/></div>
+              <h3 className="card-title" style={{ marginBottom: '12px' }}>Unreliable answers</h3>
+              <p className="body-text">Without sources and context, answers can't be trusted.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. How OmniRAG Works */}
+      <section className="section" style={{ textAlign: 'center' }}>
+        <div className="container">
+          <div className="small-label">HOW OMNIRAG WORKS</div>
+          <h2 className="section-title" style={{ marginBottom: '64px' }}>From any source to <span className="text-gradient">trusted answers</span>.</h2>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '32px', position: 'relative', overflowX: 'auto', paddingBottom: '16px' }}>
+            {/* Background dashed line */}
+            <div className="hidden-mobile" style={{ position: 'absolute', top: '24px', left: '10%', right: '10%', height: '2px', borderTop: '2px dashed var(--color-border)', zIndex: 0 }}></div>
+            
+            <div style={{ flex: 1, position: 'relative', zIndex: 1, backgroundColor: 'var(--color-bg)', minWidth: '200px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '24px', backgroundColor: '#EFF6FF', border: '2px solid var(--color-bg)', boxShadow: '0 4px 12px rgba(37,99,235,0.1)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontWeight: 700, fontSize: '14px' }}>01</div>
+              <h3 className="card-title" style={{ marginBottom: '12px' }}>Ingest</h3>
+              <p className="body-text" style={{ fontSize: '14px' }}>Upload files, connect apps, or crawl websites.</p>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '16px', color: 'var(--color-text-muted)' }}>
+                <div style={{ backgroundColor: '#F1F5F9', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>PDF</div>
+                <div style={{ backgroundColor: '#F1F5F9', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>DOCX</div>
+                <div style={{ backgroundColor: '#F1F5F9', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>API</div>
+              </div>
+            </div>
+            
+            <div style={{ flex: 1, position: 'relative', zIndex: 1, backgroundColor: 'var(--color-bg)', minWidth: '200px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '24px', backgroundColor: '#EFF6FF', border: '2px solid var(--color-bg)', boxShadow: '0 4px 12px rgba(37,99,235,0.1)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontWeight: 700, fontSize: '14px' }}>02</div>
+              <h3 className="card-title" style={{ marginBottom: '12px' }}>Process</h3>
+              <p className="body-text" style={{ fontSize: '14px' }}>We chunk, embed, and index your data securely.</p>
+            </div>
+            
+            <div style={{ flex: 1, position: 'relative', zIndex: 1, backgroundColor: 'var(--color-bg)', minWidth: '200px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '24px', backgroundColor: '#EFF6FF', border: '2px solid var(--color-bg)', boxShadow: '0 4px 12px rgba(37,99,235,0.1)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontWeight: 700, fontSize: '14px' }}>03</div>
+              <h3 className="card-title" style={{ marginBottom: '12px' }}>Ask</h3>
+              <p className="body-text" style={{ fontSize: '14px' }}>Ask anything in natural language.</p>
+            </div>
+            
+            <div style={{ flex: 1, position: 'relative', zIndex: 1, backgroundColor: 'var(--color-bg)', minWidth: '200px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '24px', backgroundColor: '#EFF6FF', border: '2px solid var(--color-bg)', boxShadow: '0 4px 12px rgba(37,99,235,0.1)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontWeight: 700, fontSize: '14px' }}>04</div>
+              <h3 className="card-title" style={{ marginBottom: '12px' }}>Get answers</h3>
+              <p className="body-text" style={{ fontSize: '14px' }}>AI replies with accurate answers and citations.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* 6. Trust / Verification */}
+      <section className="section trust-section">
+        <div className="container hero-grid">
+          <div>
+            <div className="small-label" style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'white' }}>BUILT FOR TRUST</div>
+            <h2 className="section-title" style={{ marginBottom: '24px', color: 'white' }}>
+              AI answers you can <span style={{ color: '#A78BFA' }}>verify.</span>
+            </h2>
+            <p className="body-text" style={{ marginBottom: '40px', color: '#94A3B8', fontSize: '18px' }}>
+              Every answer is grounded in your knowledge and linked back to its original source.
             </p>
-            <div style={{ display: 'flex', gap: '16px', color: '#94a3b8' }}>
-              <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#f1f5f9' }}></div>
-              <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#f1f5f9' }}></div>
-              <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#f1f5f9' }}></div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ color: '#A78BFA' }}><FileText size={24} /></div>
+                <div>
+                  <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '4px', color: 'white' }}>Source citations</h4>
+                  <p style={{ color: '#94A3B8', fontSize: '14px' }}>See exactly where the answer comes from.</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ color: '#A78BFA' }}><ShieldCheck size={24} /></div>
+                <div>
+                  <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '4px', color: 'white' }}>Grounded retrieval</h4>
+                  <p style={{ color: '#94A3B8', fontSize: '14px' }}>Answers are generated only from retrieved context.</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ color: '#A78BFA' }}><Lock size={24} /></div>
+                <div>
+                  <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '4px', color: 'white' }}>Workspace isolation</h4>
+                  <p style={{ color: '#94A3B8', fontSize: '14px' }}>Your data is private, secure, and always yours.</p>
+                </div>
+              </div>
             </div>
           </div>
           
-          <div style={{ display: 'flex', gap: '60px', flexWrap: 'wrap' }}>
-            <FooterCol title="Product" links={['Features', 'Use Cases', 'Pricing', 'Changelog']} />
-            <FooterCol title="Resources" links={['Documentation', 'Blog', 'Help Center', 'Community']} />
-            <FooterCol title="Company" links={['About Us', 'Careers', 'Contact']} />
-            <FooterCol title="Legal" links={['Privacy Policy', 'Terms of Service', 'Security']} />
+          {/* Trust Mockup */}
+          <div style={{ position: 'relative' }}>
+            <div className="mockup" style={{ backgroundColor: 'white', padding: '24px', color: 'var(--color-text-main)' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '16px' }}>AI Answer</div>
+              <div style={{ fontSize: '14px', lineHeight: 1.6, marginBottom: '24px' }}>
+                Employees receive 20 days of annual leave. <span style={{ color: 'var(--color-primary)', fontSize: '12px', fontWeight: 600 }}>[1]</span>
+              </div>
+              
+              <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>Sources</div>
+              <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', backgroundColor: '#F8FAFC' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>[1]</span>
+                  <span>Employee Handbook.pdf</span>
+                </div>
+                <div style={{ display: 'flex', gap: '16px', color: 'var(--color-text-muted)', fontSize: '12px' }}>
+                  <span>Page 24</span>
+                  <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>94%</span>
+                </div>
+              </div>
+              
+              {/* Floating Context Panel */}
+              <div className="hidden-mobile" style={{ position: 'absolute', bottom: '-20px', right: '-20px', width: '280px', backgroundColor: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 24px 60px rgba(0,0,0,0.3)', border: '1px solid var(--color-border)' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '12px', color: 'var(--color-text-main)' }}>Retrieved context</div>
+                <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.5, fontStyle: 'italic', marginBottom: '16px' }}>
+                  "Full-time employees are entitled to 20 days of paid annual leave per calendar year, in addition to public holidays..."
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Chunk 2 of 8</span>
+                  <span style={{ fontSize: '12px', color: 'var(--color-primary)', fontWeight: 600 }}>View all sources &rarr;</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="hidden-mobile" style={{ position: 'absolute', top: '-20px', left: '-20px', backgroundColor: 'var(--color-primary)', color: 'white', width: '48px', height: '48px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 16px rgba(37,99,235,0.3)' }}>
+              <ShieldCheck size={24} />
+            </div>
           </div>
         </div>
-      </footer>
-      
-      <style>{`
-        .hidden-mobile { display: block; }
-        @media (max-width: 767px) {
-          .hidden-mobile { display: none !important; }
-        }
-      `}</style>
-    </div>
-  );
-}
+      </section>
 
-function FeatureItem({ icon, title, desc, color }: { icon: any, title: string, desc: string, color: string }) {
-  return (
-    <div className="feature-card">
-      <div style={{ backgroundColor: `${color}15`, color: color, width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-        {icon}
-      </div>
-      <h3 style={{ fontSize: '16px', marginBottom: '8px' }}>{title}</h3>
-      <p style={{ fontSize: '14px', color: 'var(--text-body)' }}>{desc}</p>
-    </div>
-  );
-}
-
-function UseCaseCard({ title, desc, icon }: { title: string, desc: string, icon: string }) {
-  return (
-    <div className="feature-card" style={{ display: 'flex', gap: '16px', padding: '20px' }}>
-      <div style={{ fontSize: '24px', backgroundColor: '#f8fafc', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
-      <div>
-        <h3 style={{ fontSize: '16px', marginBottom: '4px' }}>{title}</h3>
-        <p style={{ fontSize: '14px', color: 'var(--text-body)' }}>{desc}</p>
-      </div>
-    </div>
-  );
-}
-
-function PricingCard({ title, subtitle, price, isCustom, features, cta, isPro }: any) {
-  return (
-    <div className={`pricing-card ${isPro ? 'pro' : ''}`}>
-      {isPro && <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#6366f1', color: 'white', fontSize: '12px', fontWeight: 600, padding: '4px 12px', borderRadius: '20px' }}>Popular</div>}
-      <h3 style={{ fontSize: '20px', marginBottom: '4px' }}>{title}</h3>
-      <p style={{ fontSize: '14px', color: 'var(--text-body)', marginBottom: '24px' }}>{subtitle}</p>
-      
-      <div style={{ marginBottom: '32px' }}>
-        <span style={{ fontSize: '40px', fontWeight: 800 }}>{price}</span>
-        {!isCustom && <span style={{ color: 'var(--text-body)' }}>/month</span>}
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '40px', flex: 1 }}>
-        {features.map((f: string, i: number) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: 'var(--text-body)' }}>
-            <CheckCircle2 size={16} color={isPro ? "#6366f1" : "#10b981"} />
-            {f}
+      {/* 7. Platform Capabilities */}
+      <section className="section" style={{ backgroundColor: 'var(--color-bg-soft)', textAlign: 'center' }}>
+        <div className="container">
+          <div className="small-label">POWERFUL CAPABILITIES</div>
+          <h2 className="section-title" style={{ marginBottom: '64px' }}>Everything you need for a <span className="text-gradient">modern</span> RAG platform.</h2>
+          
+          <div className="capabilities-grid text-left">
+            {/* Group 1 */}
+            <div className="card" style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-main)', marginBottom: '24px', borderBottom: '1px solid var(--color-border)', paddingBottom: '12px' }}>Knowledge Ingestion</div>
+              
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ color: 'var(--color-primary)' }}><UploadCloud size={24} /></div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>Document Upload</h4>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>PDF, DOCX, TXT, CSV and more.</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ color: 'var(--color-primary)' }}><Globe size={24} /></div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>Website Crawler</h4>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Crawl and extract content from any website.</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ color: 'var(--color-primary)' }}><Layers size={24} /></div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>Smart Processing</h4>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Chunk, embed, and index for high-quality retrieval.</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Group 2 */}
+            <div className="card" style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-main)', marginBottom: '24px', borderBottom: '1px solid var(--color-border)', paddingBottom: '12px' }}>AI & Retrieval</div>
+              
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ color: 'var(--color-purple)' }}><Bot size={24} /></div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>AI Chat with Citations</h4>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Get answers with sources from your data.</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ color: 'var(--color-purple)' }}><Database size={24} /></div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>Advanced Retrieval</h4>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Hybrid search, reranking, and metadata filtering.</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ color: 'var(--color-purple)' }}><Braces size={24} /></div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>API Access</h4>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Integrate with your apps using our REST API.</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Group 3 */}
+            <div className="card" style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-main)', marginBottom: '24px', borderBottom: '1px solid var(--color-border)', paddingBottom: '12px' }}>Enterprise Ready</div>
+              
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ color: '#F59E0B' }}><Layout size={24} /></div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>Multi-workspace</h4>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Organize knowledge bases for teams and projects.</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ color: '#F59E0B' }}><Lock size={24} /></div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>Security & Privacy</h4>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Your data is encrypted and never used for training.</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ color: '#F59E0B' }}><LineChart size={24} /></div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>Analytics Dashboard</h4>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Track usage, popular queries, and answer performance.</p>
+                </div>
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      </section>
 
-      <button className={`btn hover-lift ${isPro ? 'bg-gradient' : 'btn-outline'}`} style={{ width: '100%', padding: '12px', fontSize: '14px', borderRadius: '8px', border: isPro ? 'none' : '' }}>
-        {cta}
-      </button>
+      {/* 8. Use Cases Section */}
+      <section className="section">
+        <div className="container" style={{ textAlign: 'center' }}>
+          <div className="small-label">USE CASES</div>
+          <h2 className="section-title" style={{ marginBottom: '40px' }}>Built for teams across every industry.</h2>
+          
+          <div className="use-case-tabs" role="tablist" aria-label="Use cases">
+            {['Customer Support', 'HR & People Ops', 'Legal', 'Education', 'Sales Enablement', 'Internal Knowledge'].map((tab) => (
+              <button 
+                key={tab}
+                role="tab"
+                aria-selected={activeTab === tab}
+                className={`use-case-tab ${activeTab === tab ? 'active-tab' : ''}`}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          
+          {/* Active Tab Content */}
+          <div className="card" style={{ display: 'flex', gap: '48px', padding: '48px', textAlign: 'left', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 300px' }}>
+              <h3 className="section-title" style={{ fontSize: '32px', marginBottom: '16px' }}>
+                {activeTab === 'Customer Support' ? 'Resolve customer questions faster' :
+                 activeTab === 'HR & People Ops' ? 'Answer employee policy questions instantly' :
+                 activeTab === 'Legal' ? 'Search contracts with confidence' :
+                 activeTab === 'Education' ? 'Empower students with instant answers' :
+                 activeTab === 'Sales Enablement' ? 'Find product details fast' :
+                 'Centralize company knowledge'
+                }
+              </h3>
+              <p className="body-text" style={{ marginBottom: '32px' }}>
+                {activeTab === 'Customer Support' ? 'Enable your support team with instant answers from docs, policies, and product guides.' :
+                 activeTab === 'HR & People Ops' ? 'Use handbooks, onboarding guides, and HR documents as the source of truth.' :
+                 activeTab === 'Legal' ? 'Search contracts, NDAs, and legal documents with confidence.' :
+                 activeTab === 'Education' ? 'Help students and teachers find answers from course materials.' :
+                 activeTab === 'Sales Enablement' ? 'Help sales teams find product details, competitive intel, and pitch content fast.' :
+                 'Centralize company knowledge and improve team productivity.'
+                }
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-text-main)', fontWeight: 500 }}><Check size={18} color="var(--color-primary)"/> {activeTab === 'Customer Support' ? 'Reduce repetitive tickets' : 'Increase efficiency'}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-text-main)', fontWeight: 500 }}><Check size={18} color="var(--color-primary)"/> {activeTab === 'Customer Support' ? 'Provide 24/7 self-service' : 'Accurate citations'}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-text-main)', fontWeight: 500 }}><Check size={18} color="var(--color-primary)"/> {activeTab === 'Customer Support' ? 'Cite official documentation' : 'Secure and private'}</div>
+              </div>
+            </div>
+            
+            <div style={{ flex: '1 1 400px', backgroundColor: '#F8FAFC', borderRadius: '16px', padding: '24px', border: '1px solid var(--color-border)', position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '16px', backgroundColor: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={16}/></div>
+                <div style={{ backgroundColor: 'white', padding: '10px 16px', borderRadius: '16px 16px 16px 0', fontSize: '13px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid var(--color-border)' }}>
+                  {activeTab === 'Customer Support' ? 'What is your return policy?' : 'What is the PTO policy?'}
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '16px', background: 'var(--color-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}><Bot size={16}/></div>
+                <div style={{ backgroundColor: 'white', padding: '16px', borderRadius: '16px 16px 16px 0', fontSize: '13px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid var(--color-border)', flex: 1 }}>
+                  {activeTab === 'Customer Support' ? 'You can return items within 30 days of purchase.' : 'Employees get 20 days of PTO.'} <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>[1]</span>
+                  
+                  <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#F8FAFC', borderRadius: '8px', border: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><FileText size={14} color="var(--color-primary)"/> {activeTab === 'Customer Support' ? 'Return Policy.pdf' : 'Handbook.pdf'}</span>
+                    <span style={{ color: 'var(--color-text-muted)' }}>p.3</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Analytics Mini-Card */}
+              <div style={{ position: 'absolute', bottom: '24px', right: '-24px', backgroundColor: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 12px 30px rgba(0,0,0,0.1)', border: '1px solid var(--color-border)' }} className="hidden-mobile">
+                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '8px' }}>
+                  {activeTab === 'Customer Support' ? 'Tickets resolved' : 'Time saved'}
+                </div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-text-main)' }}>+38%</div>
+                <div style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>vs last month</div>
+                <svg width="100" height="30" style={{ marginTop: '8px' }}>
+                  <polyline points="0,25 20,15 40,20 60,5 80,10 100,2" fill="none" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. Enterprise Security Banner */}
+      <section style={{ padding: '0 24px' }}>
+        <div className="container security-banner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '32px' }}>
+          <div style={{ flex: '1 1 300px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
+              <ShieldCheck size={32} color="#A78BFA" />
+              <h3 style={{ fontSize: "24px", fontWeight: 700, lineHeight: 1.2, color: "white" }}>Enterprise-grade security<br/>for your most important data.</h3>
+            </div>
+          </div>
+          <div style={{ flex: '1 1 500px', display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '8px', borderRadius: '8px' }}><ShieldCheck size={18} color="#A78BFA"/></div>
+              <span style={{ fontSize: '13px', fontWeight: 500 }}>SOC 2 Type II<br/>Compliant</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '8px', borderRadius: '8px' }}><Lock size={18} color="#A78BFA"/></div>
+              <span style={{ fontSize: '13px', fontWeight: 500 }}>Encryption<br/>At Rest & In Transit</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '8px', borderRadius: '8px' }}><Layout size={18} color="#A78BFA"/></div>
+              <span style={{ fontSize: '13px', fontWeight: 500 }}>Private Workspaces<br/>& Access Control</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '8px', borderRadius: '8px' }}><Search size={18} color="#A78BFA"/></div>
+              <span style={{ fontSize: '13px', fontWeight: 500 }}>Audit Logs<br/>& Monitoring</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 10. Pricing Section */}
+      <section className="section" id="pricing">
+        <div className="container" style={{ textAlign: 'center' }}>
+          <div className="small-label">PRICING</div>
+          <h2 className="section-title" style={{ marginBottom: '24px' }}>Simple, <span className="text-gradient">transparent</span> pricing.</h2>
+          
+          <div style={{ display: 'inline-flex', backgroundColor: 'var(--color-bg-soft)', borderRadius: '12px', padding: '4px', marginBottom: '64px', border: '1px solid var(--color-border)' }}>
+            <button style={{ padding: '8px 16px', borderRadius: '8px', fontWeight: 600, fontSize: '14px', color: 'var(--color-text-muted)' }}>Monthly</button>
+            <button style={{ padding: '8px 16px', borderRadius: '8px', fontWeight: 600, fontSize: '14px', backgroundColor: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', color: 'var(--color-text-main)' }}>Yearly <span style={{ color: 'var(--color-success)', fontSize: '12px', marginLeft: '4px' }}>Save 20%</span></button>
+          </div>
+          
+          <div className="pricing-grid text-left">
+            {/* Free Plan */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '4px' }}>Free</h3>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '24px', minHeight: '40px' }}>For individuals getting started</p>
+              <div style={{ marginBottom: '24px' }}>
+                <span style={{ fontSize: '36px', fontWeight: 800 }}>$0</span><span style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}> /month</span>
+              </div>
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px', flex: 1, fontSize: '14px' }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-primary)"/> 1 Workspace</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-primary)"/> 50 Documents</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-primary)"/> 100 Questions / month</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-primary)"/> Basic AI Models</li>
+              </ul>
+              <button className="btn-secondary" style={{ width: '100%' }}>Get Started</button>
+            </div>
+            
+            {/* Pro Plan */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', border: '2px solid var(--color-purple)', position: 'relative', boxShadow: '0 20px 40px rgba(124, 58, 237, 0.1)' }}>
+              <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', backgroundColor: 'var(--color-purple)', color: 'white', padding: '4px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Popular</div>
+              <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '4px' }}>Pro</h3>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '24px', minHeight: '40px' }}>For small teams</p>
+              <div style={{ marginBottom: '24px' }}>
+                <span style={{ fontSize: '36px', fontWeight: 800 }}>$29</span><span style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}> /month</span>
+              </div>
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px', flex: 1, fontSize: '14px' }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-purple)"/> 3 Workspaces</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-purple)"/> 5,000 Documents</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-purple)"/> 10,000 Questions / month</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-purple)"/> Advanced AI Models</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-purple)"/> Priority Support</li>
+              </ul>
+              <button className="btn-primary" style={{ width: '100%' }}>Start Free Trial</button>
+            </div>
+            
+            {/* Business Plan */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '4px' }}>Business</h3>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '24px', minHeight: '40px' }}>For growing companies</p>
+              <div style={{ marginBottom: '24px' }}>
+                <span style={{ fontSize: '36px', fontWeight: 800 }}>$99</span><span style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}> /month</span>
+              </div>
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px', flex: 1, fontSize: '14px' }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-primary)"/> Unlimited Workspaces</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-primary)"/> 25,000 Documents</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-primary)"/> 50,000 Questions / month</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-primary)"/> API Access</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-primary)"/> Analytics Dashboard</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-primary)"/> Team Management</li>
+              </ul>
+              <button className="btn-secondary" style={{ width: '100%' }}>Start Free Trial</button>
+            </div>
+            
+            {/* Enterprise Plan */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '4px' }}>Enterprise</h3>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '24px', minHeight: '40px' }}>For large organizations</p>
+              <div style={{ marginBottom: '24px' }}>
+                <span style={{ fontSize: '36px', fontWeight: 800 }}>Custom</span>
+              </div>
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px', flex: 1, fontSize: '14px' }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-text-main)"/> Everything in Business</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-text-main)"/> SSO / SAML</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-text-main)"/> Private Deployment</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-text-main)"/> Dedicated Support</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Check size={16} color="var(--color-text-main)"/> Custom SLAs</li>
+              </ul>
+              <button className="btn-secondary" style={{ width: '100%' }}>Contact Sales</button>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '32px', flexWrap: 'wrap' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={14}/> 14-day free trial</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={14}/> No credit card required</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={14}/> Cancel anytime</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 11. Final CTA */}
+      <section className="section" style={{ padding: '0 24px 80px' }}>
+        <div className="container final-cta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '32px' }}>
+          <div>
+            <h2 style={{ fontSize: '32px', fontWeight: 700, marginBottom: '12px', color: 'white' }}>Ready to turn your knowledge into answers?</h2>
+            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '18px' }}>Start building your AI knowledge assistant today.</p>
+          </div>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <Link to="/login" style={{ backgroundColor: 'white', color: 'var(--color-primary)', padding: '14px 28px', borderRadius: '12px', fontWeight: 700, fontSize: '16px', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              Start Free &rarr;
+            </Link>
+            <button style={{ backgroundColor: 'transparent', color: 'white', padding: '14px 28px', borderRadius: '12px', fontWeight: 700, fontSize: '16px', border: '1px solid rgba(255,255,255,0.3)' }}>
+              Book a Demo
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 12. Footer */}
+      <footer style={{ borderTop: '1px solid var(--color-border)', paddingTop: '64px', paddingBottom: '32px' }}>
+        <div className="container" style={{ display: 'flex', flexWrap: 'wrap', gap: '48px', justifyContent: 'space-between', marginBottom: '64px' }}>
+          <div style={{ maxWidth: '280px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <img src="/logo.svg" alt="OmniRAG Logo" style={{ width: '32px', height: '32px' }} />
+              <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-text-main)' }}>OmniRAG</span>
+            </div>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', lineHeight: 1.6, marginBottom: '24px' }}>
+              The RAG platform that connects your data with AI to deliver accurate, trusted answers.
+            </p>
+            <div style={{ display: 'flex', gap: '16px', color: 'var(--color-text-muted)' }}>
+              <a href="#" style={{ color: 'inherit' }}>Twitter / X</a>
+              <a href="#" style={{ color: 'inherit' }}>LinkedIn</a>
+              <a href="#" style={{ color: 'inherit' }}>GitHub</a>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '48px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '120px' }}>
+              <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-text-main)', marginBottom: '4px' }}>Product</div>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Features</a>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Use Cases</a>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Pricing</a>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Changelog</a>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '120px' }}>
+              <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-text-main)', marginBottom: '4px' }}>Resources</div>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Documentation</a>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Blog</a>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Help Center</a>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Community</a>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '120px' }}>
+              <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-text-main)', marginBottom: '4px' }}>Company</div>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>About Us</a>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Careers</a>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Contact</a>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '120px' }}>
+              <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-text-main)', marginBottom: '4px' }}>Legal</div>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Privacy Policy</a>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Terms of Service</a>
+              <a href="#" style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Security</a>
+            </div>
+          </div>
+        </div>
+        <div className="container" style={{ borderTop: '1px solid var(--color-border)', paddingTop: '32px', textAlign: 'center', color: 'var(--color-text-light)', fontSize: '14px' }}>
+          &copy; 2026 OmniRAG. All rights reserved.
+        </div>
+      </footer>
+
     </div>
-  );
-}
-
-function FooterCol({ title, links }: { title: string, links: string[] }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <h4 style={{ fontSize: '14px', fontWeight: 600 }}>{title}</h4>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {links.map((link, i) => (
-          <a key={i} href="#" style={{ color: 'var(--text-body)', fontSize: '14px' }} className="transition-colors hover-lift">{link}</a>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Simple dummy icon for input box
-function SendIcon(props: any) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <line x1="22" y1="2" x2="11" y2="13"></line>
-      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-    </svg>
   );
 }

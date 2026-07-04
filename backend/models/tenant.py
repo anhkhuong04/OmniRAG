@@ -1,12 +1,14 @@
 import uuid
 from datetime import datetime
-from typing import List, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
     from backend.models.api_key import APIKey
     from backend.models.document import Document
     from backend.models.conversation import Conversation
+    from backend.models.user_tenant import UserTenantLink
+    from backend.models.subscription import Subscription
 
 
 class Tenant(SQLModel, table=True):
@@ -38,6 +40,14 @@ class Tenant(SQLModel, table=True):
         sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
     conversations: List["Conversation"] = Relationship(
-        back_populates="tenant", 
+        back_populates="tenant",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
+    member_links: List["UserTenantLink"] = Relationship(
+        back_populates="tenant",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
+    subscription: Optional["Subscription"] = Relationship(
+        back_populates="tenant",
+        sa_relationship_kwargs={"uselist": False, "cascade": "all, delete-orphan"}
     )

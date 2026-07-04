@@ -108,3 +108,74 @@ async def revoke_api_key(
     await session.refresh(api_key)
     logger.info("Revoked API key: id=%s for tenant=%s", key_id, api_key.tenant_id)
     return api_key
+
+
+# ─── System Admin Panel Operations ──────────────────────────────────────────────
+
+from typing import Any
+from backend.api.dependencies import SystemAdminDep
+from backend.services import admin_service
+
+@router.get("/system/tenants")
+async def list_tenants(
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+    skip: int = 0,
+    limit: int = 50,
+) -> Any:
+    return await admin_service.get_tenants(db, skip, limit)
+
+@router.post("/system/tenants/{tenant_id}/disable")
+async def disable_tenant(
+    tenant_id: str,
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+) -> Any:
+    return await admin_service.toggle_tenant_status(
+        db, tenant_id, is_active=False, admin_user_id=str(admin_user.id)
+    )
+
+@router.post("/system/tenants/{tenant_id}/enable")
+async def enable_tenant(
+    tenant_id: str,
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+) -> Any:
+    return await admin_service.toggle_tenant_status(
+        db, tenant_id, is_active=True, admin_user_id=str(admin_user.id)
+    )
+
+@router.get("/system/usage-summary")
+async def get_system_usage_summary(
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+) -> Any:
+    return await admin_service.get_system_usage(db)
+
+@router.get("/system/ingestion/failed-jobs")
+async def list_failed_jobs(
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+    skip: int = 0,
+    limit: int = 50,
+) -> Any:
+    return await admin_service.get_failed_jobs(db, skip, limit)
+
+@router.post("/system/ingestion/{document_id}/retry")
+async def retry_failed_job(
+    document_id: str,
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+) -> Any:
+    return await admin_service.retry_failed_job(
+        db, document_id, admin_user_id=str(admin_user.id)
+    )
+
+@router.get("/system/audit-logs")
+async def list_audit_logs(
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+    skip: int = 0,
+    limit: int = 50,
+) -> Any:
+    return await admin_service.get_audit_logs(db, skip, limit)

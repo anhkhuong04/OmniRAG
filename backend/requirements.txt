@@ -9,5 +9,10 @@ openai
 asyncpg
 httpx
 tiktoken
+# Auth: password hashing and JWT token signing
+passlib[bcrypt]
+python-jose[cryptography]
+# Email validation for Pydantic schemas
+email-validator
 # Optional: uncomment to enable FlashRank local reranker (runs on CPU via ONNX)
 # flashrank
