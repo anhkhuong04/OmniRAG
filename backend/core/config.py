@@ -30,6 +30,19 @@ class Settings(BaseSettings):
     # Generate one with: python -c "import secrets; print(secrets.token_hex(32))"
     ADMIN_SECRET_KEY: str = "change-me-in-production"
 
+    # --- Reranking ---
+    # Options: "none", "flashrank", "cohere"
+    RERANKER_TYPE: str = "none"
+    COHERE_API_KEY: str = ""
+    # Number of candidates to retrieve before reranking (should be > RAG_TOP_K)
+    RERANK_CANDIDATES: int = 15
+
+    # --- Semantic Cache (Qdrant) ---
+    USE_SEMANTIC_CACHE: bool = True
+    RAG_CACHE_COLLECTION: str = "omnirag_cache"
+    # Cosine similarity threshold for a cache hit (0.0 - 1.0)
+    RAG_CACHE_THRESHOLD: float = 0.95
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

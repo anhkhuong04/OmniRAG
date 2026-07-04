@@ -7,3 +7,7 @@ langchain-text-splitters
 qdrant-client
 openai
 asyncpg
+httpx
+tiktoken
+# Optional: uncomment to enable FlashRank local reranker (runs on CPU via ONNX)
+# flashrank

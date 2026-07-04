@@ -39,12 +39,13 @@ async def ingest_document(
     await session.refresh(new_doc)
     
     try:
-        # 2. Xử lý RAG: Chunking và Vectorizing
+        # 2. Xử lý RAG: Chunking và Vectorizing (lưu cả Qdrant + Postgres)
         chunks_ingested = await document_service.ingest_text(
             tenant_id=str(tenant_id),
             document_id=str(doc_id),
             text=request.text,
             filename=request.filename,
+            db_session=session,
         )
         
         # 3. Cập nhật trạng thái thành công

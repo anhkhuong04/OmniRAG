@@ -41,11 +41,20 @@
 - [x] 5.5.2 Xây dựng `LandingPage.tsx`: Layout 10 sections (Hero, Features, Pricing,...).
 - [x] 5.5.3 Tái cấu trúc routing `App.tsx`: `/` cho Landing, `/dashboard` cho Dashboard.
 
-### Pha 6: Tối ưu hóa & Triển khai (Optimization & Deploy)
-- [ ] 6.1 Tối ưu hóa RAG (Reranking Cross-Encoder, Hybrid Search, Caching các câu query phổ biến)
-- [ ] 6.2 Tối ưu hóa chi phí token (Prompt compression, Token counter)
-- [ ] 6.3 Đóng gói Docker & Docker Compose cho toàn bộ hệ thống (FastAPI, Postgres, Qdrant, UI)
-- [ ] 6.4 Triển khai thực tế & Viết tài liệu bàn giao
+### Pha 6: Tối ưu hóa (Optimization)
+- [x] 6.1 Cập nhật `config.py`: Thêm cấu hình RERANKER_TYPE, cache, Cohere API.
+- [x] 6.2 Tạo model `DocumentChunk` (Postgres) & cập nhật `Message` với token tracking.
+- [x] 6.3 Tạo `rerank_service.py` (FlashRank / Cohere).
+- [x] 6.4 Tạo `cache_service.py` (Semantic Cache trên Qdrant).
+- [x] 6.5 Tạo `search_service.py` (Hybrid Search: Qdrant Dense + Postgres FTS + RRF).
+- [x] 6.6 Cập nhật `document_service.py`: Lưu chunks vào Postgres khi ingest.
+- [x] 6.7 Cập nhật `rag_service.py`: Tích hợp Cache, Hybrid Search, Token Counter.
+- [x] 6.8 Cập nhật `chat.py`: Lưu token usage vào DB.
+- [ ] 6.9 Viết `scripts/test_optimization.py`: Kiểm thử Cache, Hybrid Search, Token Tracking.
+
+### Pha 7: Triển khai (Deploy)
+- [ ] 7.1 Đóng gói Docker & Docker Compose cho toàn bộ hệ thống (FastAPI, Postgres, Qdrant, UI)
+- [ ] 7.2 Triển khai thực tế & Viết tài liệu bàn giao
 
 ---
 

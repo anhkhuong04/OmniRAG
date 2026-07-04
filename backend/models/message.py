@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 # pyrefly: ignore [missing-import]
 from sqlmodel import SQLModel, Field, Relationship
 
@@ -28,6 +28,11 @@ class Message(SQLModel, table=True):
     sender: str = Field(nullable=False, max_length=50)
     content: str = Field(nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
+    # Token usage tracking (populated only for assistant messages)
+    prompt_tokens: Optional[int] = Field(default=None, nullable=True)
+    completion_tokens: Optional[int] = Field(default=None, nullable=True)
+    cost_usd: Optional[float] = Field(default=None, nullable=True)
 
     # Relationships
     conversation: "Conversation" = Relationship(back_populates="messages")
