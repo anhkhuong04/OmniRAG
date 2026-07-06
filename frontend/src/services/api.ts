@@ -7,6 +7,7 @@ const API_BASE_URL = "/api";
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
+  timeout: 10000,
 });
 
 // ─── In-memory Access Token Store ────────────────────────────────────────────
@@ -59,7 +60,7 @@ apiClient.interceptors.response.use(
 
 // ─── Legacy Auth Helpers (API Key & Admin Key) ────────────────────────────────
 
-export const getTenantAuthHeaders = (apiKey: string) => ({
+export const getWorkspaceAuthHeaders = (apiKey: string) => ({
   headers: { Authorization: `Bearer ${apiKey}` },
 });
 
@@ -90,7 +91,7 @@ export interface WorkspaceResponse {
   name: string;
   is_active: boolean;
   created_at: string;
-  role: "owner" | "admin" | "member";
+  role: "owner" | "admin" | "member" | "viewer";
 }
 
 // ─── Document Types ───────────────────────────────────────────────────────────
@@ -99,7 +100,7 @@ export type DocumentStatus = "pending" | "processing" | "completed" | "failed";
 
 export interface DocumentStatusResponse {
   id: string;
-  tenant_id: string;
+  workspace_id: string;
   filename: string;
   file_type: string;
   status: DocumentStatus;
@@ -125,7 +126,7 @@ export interface DocumentListResponse {
 
 export interface WorkspaceAPIKeyResponse {
   id: string;
-  tenant_id: string;
+  workspace_id: string;
   name: string;
   is_active: boolean;
   created_at: string;
@@ -137,7 +138,7 @@ export interface WorkspaceAPIKeyCreateResponse extends WorkspaceAPIKeyResponse {
 }
 
 export interface UsageStatsResponse {
-  tenant_id: string;
+  workspace_id: string;
   plan_name: string;
   plan_tier: string;
   documents_count: number;
@@ -159,7 +160,7 @@ export interface MonthlyUsagePoint {
 }
 
 export interface UsageHistoryResponse {
-  tenant_id: string;
+  workspace_id: string;
   history: MonthlyUsagePoint[];
 }
 
@@ -202,7 +203,10 @@ export const authRefresh = async (
   const { data } = await axios.post(
     `${API_BASE_URL}/auth/refresh`,
     { refresh_token: refreshToken },
-    { headers: { "Content-Type": "application/json" } }
+    { 
+      headers: { "Content-Type": "application/json" },
+      timeout: 10000 
+    }
   );
   return data;
 };
@@ -273,7 +277,7 @@ export const tenantIngestDocument = async (
   const { data } = await apiClient.post(
     "/documents/ingest",
     { filename, text },
-    getTenantAuthHeaders(apiKey)
+    getWorkspaceAuthHeaders(apiKey)
   );
   return data;
 };
@@ -286,7 +290,7 @@ export const tenantQuery = async (
   const { data } = await apiClient.post(
     "/chat/query",
     { query, stream },
-    getTenantAuthHeaders(apiKey)
+    getWorkspaceAuthHeaders(apiKey)
   );
   return data;
 };
@@ -302,7 +306,7 @@ export const ingestDocument = async (
   const { data } = await apiClient.post(
     "/documents/ingest",
     { filename, text, metadata },
-    getTenantAuthHeaders(apiKey)
+    getWorkspaceAuthHeaders(apiKey)
   );
   return data;
 };
@@ -313,7 +317,7 @@ export const getDocumentStatus = async (
 ): Promise<DocumentStatusResponse> => {
   const { data } = await apiClient.get(
     `/documents/${documentId}/status`,
-    getTenantAuthHeaders(apiKey)
+    getWorkspaceAuthHeaders(apiKey)
   );
   return data;
 };
@@ -325,7 +329,7 @@ export const listDocuments = async (
 ): Promise<DocumentListResponse> => {
   const { data } = await apiClient.get(
     `/documents/?skip=${skip}&limit=${limit}`,
-    getTenantAuthHeaders(apiKey)
+    getWorkspaceAuthHeaders(apiKey)
   );
   return data;
 };
@@ -336,7 +340,7 @@ export const deleteDocument = async (
 ): Promise<void> => {
   await apiClient.delete(
     `/documents/${documentId}`,
-    getTenantAuthHeaders(apiKey)
+    getWorkspaceAuthHeaders(apiKey)
   );
 };
 
@@ -347,7 +351,7 @@ export const retryDocument = async (
   const { data } = await apiClient.post(
     `/documents/${documentId}/retry`,
     {},
-    getTenantAuthHeaders(apiKey)
+    getWorkspaceAuthHeaders(apiKey)
   );
   return data;
 };
@@ -359,7 +363,7 @@ export const reindexDocument = async (
   const { data } = await apiClient.post(
     `/documents/${documentId}/reindex`,
     {},
-    getTenantAuthHeaders(apiKey)
+    getWorkspaceAuthHeaders(apiKey)
   );
   return data;
 };
@@ -443,8 +447,53 @@ export const adminEnableTenant = async (tenantId: string) => {
   return data;
 };
 
+export const adminGetWorkspaces = async (skip = 0, limit = 50) => {
+  const { data } = await apiClient.get(`/admin/system/workspaces?skip=${skip}&limit=${limit}`);
+  return data;
+};
+
+export const adminImpersonateTenant = async (tenantId: string): Promise<{ access_token: string, impersonated_tenant_id: string }> => {
+  const { data } = await apiClient.post(`/admin/system/tenants/${tenantId}/impersonate`);
+  return data;
+};
+
+export interface AdminPlanUpdate {
+  display_name?: string;
+  price_usd_monthly?: number;
+  max_documents?: number;
+  max_queries_per_month?: number;
+  max_file_size_mb?: number;
+}
+
+export const adminGetPlans = async () => {
+  const { data } = await apiClient.get(`/admin/system/plans`);
+  return data;
+};
+
+export const adminUpdatePlan = async (planId: string, payload: AdminPlanUpdate) => {
+  const { data } = await apiClient.put(`/admin/system/plans/${planId}`, payload);
+  return data;
+};
+
 export const adminGetSystemUsage = async (): Promise<AdminSystemUsage> => {
   const { data } = await apiClient.get(`/admin/system/usage-summary`);
+  return data;
+};
+
+
+
+export interface AdminSystemKpis {
+  total_workspaces: number;
+  active_workspaces: number;
+  total_users: number;
+  active_users: number;
+  total_documents: number;
+  mrr_usd: number;
+  total_ai_cost_usd: number;
+}
+
+export const adminGetSystemKpis = async (): Promise<AdminSystemKpis> => {
+  const { data } = await apiClient.get(`/admin/system/kpis`);
   return data;
 };
 

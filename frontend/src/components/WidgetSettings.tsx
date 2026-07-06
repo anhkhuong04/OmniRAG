@@ -4,7 +4,7 @@ import { Save, Code, CheckCircle, ExternalLink } from 'lucide-react';
 
 interface WidgetConfig {
   id: string;
-  tenant_id: string;
+  workspace_id: string;
   public_token: string;
   bot_name: string;
   welcome_message: string;
@@ -25,7 +25,7 @@ export const WidgetSettings: React.FC<WidgetSettingsProps> = ({ apiKey }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [workspaceId, setWorkspaceId] = useState(localStorage.getItem('tenantId') || '');
+  const [workspaceId, setWorkspaceId] = useState(localStorage.getItem('workspaceId') || '');
 
   const fetchConfig = useCallback(async () => {
     if (!apiKey || !workspaceId) return;

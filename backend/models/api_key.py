@@ -4,7 +4,7 @@ from typing import Optional, TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
-    from backend.models.tenant import Tenant
+    from backend.models.workspace import Workspace
     from backend.models.usage_log import UsageLog
 
 
@@ -13,7 +13,7 @@ class APIKey(SQLModel, table=True):
     
     Attributes:
         id: Unique identifier for the API key record.
-        tenant_id: Foreign key mapping to the Tenant.
+        workspace_id: Foreign key mapping to the Workspace.
         key_hash: SHA-256 hashed API key value.
         name: A friendly name for the key.
         is_active: Boolean flag indicating if the key is active.
@@ -24,7 +24,7 @@ class APIKey(SQLModel, table=True):
     __tablename__ = "api_keys"
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
-    tenant_id: uuid.UUID = Field(foreign_key="tenants.id", index=True, nullable=False)
+    workspace_id: uuid.UUID = Field(foreign_key="workspaces.id", index=True, nullable=False)
     key_hash: str = Field(index=True, nullable=False, unique=True)
     name: str = Field(nullable=False, max_length=100)
     is_active: bool = Field(default=True, nullable=False)
@@ -32,5 +32,5 @@ class APIKey(SQLModel, table=True):
     expires_at: Optional[datetime] = Field(default=None, nullable=True)
 
     # Relationships
-    tenant: "Tenant" = Relationship(back_populates="api_keys")
+    workspace: "Workspace" = Relationship(back_populates="api_keys")
     usage_logs: list["UsageLog"] = Relationship(back_populates="api_key")

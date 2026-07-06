@@ -71,6 +71,7 @@ class UserResponse(BaseModel):
     full_name: str
     is_verified: bool
     is_active: bool
+    is_system_admin: bool
     created_at: datetime
 
     class Config:

@@ -4,15 +4,15 @@ from typing import Optional, TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
-    from backend.models.tenant import Tenant
+    from backend.models.workspace import Workspace
 
 
 class WidgetConfig(SQLModel, table=True):
-    """Represents a chat widget configuration for a tenant."""
+    """Represents a chat widget configuration for a workspace."""
     __tablename__ = "widget_configs"
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
-    tenant_id: uuid.UUID = Field(foreign_key="tenants.id", index=True, nullable=False, unique=True)
+    workspace_id: uuid.UUID = Field(foreign_key="workspaces.id", index=True, nullable=False, unique=True)
     public_token: str = Field(nullable=False, max_length=255, index=True, unique=True)
     
     # Customization
@@ -30,4 +30,4 @@ class WidgetConfig(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
-    tenant: "Tenant" = Relationship()
+    workspace: "Workspace" = Relationship()

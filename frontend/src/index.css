@@ -30,6 +30,211 @@
   --accent-primary: #2563EB;
 }
 
+/* ─── Dark Mode Theme ─── */
+.dark {
+  --color-bg: #0B1120;
+  --color-bg-soft: #1E293B;
+  --color-bg-blue: #0F172A;
+
+  --color-text-main: #F8FAFC;
+  --color-text-muted: #94A3B8;
+  --color-text-light: #64748B;
+
+  --color-primary: #3B82F6;
+  --color-primary-dark: #60A5FA;
+  --color-purple: #8B5CF6;
+  --color-indigo: #6366F1;
+  
+  --color-gradient: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%);
+
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-card: rgba(30, 41, 59, 0.7);
+
+  --bg-primary: #0B1120;
+  --text-header: #F8FAFC;
+  --text-body: #94A3B8;
+  --accent-primary: #3B82F6;
+}
+
+/* ─── Admin Global Components ─── */
+.admin-page {
+  animation: fadein 0.3s ease-out;
+}
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.admin-glass-panel {
+  background: var(--color-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  text-align: left;
+}
+
+.admin-table th {
+  padding: 16px 24px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(0,0,0,0.2);
+}
+
+.admin-table td {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.2s;
+}
+
+.admin-table tbody tr:hover td {
+  background: rgba(255,255,255,0.02);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-badge::before {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.admin-badge-success {
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.admin-badge-success::before {
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+}
+
+.admin-badge-danger {
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.admin-badge-danger::before {
+  background: #EF4444;
+  box-shadow: 0 0 8px #EF4444;
+}
+
+.admin-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.admin-btn:hover {
+  transform: translateY(-1px);
+}
+
+.admin-btn:active {
+  transform: translateY(0);
+}
+
+.admin-btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.admin-btn-primary:hover {
+  background: var(--color-primary-dark);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.admin-btn-outline {
+  background: transparent;
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
+}
+
+.admin-btn-outline:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.admin-input {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.admin-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.user-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-main);
+  background: transparent;
+  transition: background 0.2s;
+  text-align: left;
+}
+
+.user-menu-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dark .user-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.user-menu-btn.text-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
 /* Base Styles */
 * {
   box-sizing: border-box;

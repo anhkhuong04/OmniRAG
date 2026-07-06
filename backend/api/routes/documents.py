@@ -6,7 +6,7 @@ Document management API routes (API-Key authenticated).
 Ingestion flow (202 Accepted):
   POST /documents/ingest → validates plan limits + hash → 202 → background task
   GET  /documents/{id}/status → polling endpoint (called every 2-3s by frontend)
-  GET  /documents         → list all documents for this tenant (paginated)
+  GET  /documents         → list all documents for this workspace (paginated)
   DELETE /documents/{id}  → soft-delete + cleanup Qdrant + decrement subscription counter
 """
 import hashlib
@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select, func
 
-from backend.api.dependencies import DBSessionDep, TenantContextDep, TenantIDDep
+from backend.api.dependencies import DBSessionDep, WorkspaceContextDep, WorkspaceIDDep
 from backend.models.document import Document
 from backend.schemas.document import (
     DocumentIngestRequest,
@@ -44,7 +44,7 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 )
 async def ingest_document(
     request: DocumentIngestRequest,
-    ctx: TenantContextDep,
+    ctx: WorkspaceContextDep,
     session: DBSessionDep,
 ):
     """Accepts a document for ingestion and returns immediately (202 Accepted).
@@ -60,8 +60,10 @@ async def ingest_document(
     The caller should poll GET /documents/{id}/status every 2–3 seconds to
     track progress until status becomes 'completed' or 'failed'.
     """
-    tenant_id = ctx.tenant_id
+    workspace_id = ctx.workspace_id
     api_key_id = ctx.api_key_id
+
+    tenant_id = ctx.tenant_id
 
     # ── 1. Plan enforcement ───────────────────────────────────────────────────
     await plan_guard_service.check_document_limit(session, tenant_id)
@@ -72,11 +74,11 @@ async def ingest_document(
 
     # ── 2. Idempotency check (content hash) ──────────────────────────────────
     content_hash = compute_content_hash(request.text)
-    tenant_uuid = uuid.UUID(tenant_id)
+    workspace_uuid = uuid.UUID(workspace_id)
 
     existing = await session.execute(
         select(Document).where(
-            Document.tenant_id == tenant_uuid,
+            Document.workspace_id == workspace_uuid,
             Document.content_hash == content_hash,
         )
     )
@@ -90,7 +92,7 @@ async def ingest_document(
     doc_id = uuid.uuid4()
     
     # Save to local storage for idempotency/retry/reindex
-    storage_dir = os.path.join(".storage", "tenants", tenant_id)
+    storage_dir = os.path.join(".storage", "workspaces", workspace_id)
     os.makedirs(storage_dir, exist_ok=True)
     storage_path = os.path.join(storage_dir, f"{doc_id}.txt")
     with open(storage_path, "w", encoding="utf-8") as f:
@@ -98,7 +100,7 @@ async def ingest_document(
 
     new_doc = Document(
         id=doc_id,
-        tenant_id=tenant_uuid,
+        workspace_id=workspace_uuid,
         filename=request.filename,
         file_type="txt",
         file_size_bytes=file_size_bytes,
@@ -111,6 +113,7 @@ async def ingest_document(
 
     # ── 4. Schedule background task ───────────────────────────────────────────
     document_service.run_ingestion_background(
+        workspace_id=workspace_id,
         tenant_id=tenant_id,
         document_id=str(doc_id),
         text=request.text,
@@ -119,7 +122,7 @@ async def ingest_document(
         extra_metadata=request.metadata,
     )
 
-    logger.info("Queued ingestion for document='%s' (tenant='%s').", doc_id, tenant_id)
+    logger.info("Queued ingestion for document='%s' (workspace='%s').", doc_id, workspace_id)
 
     return DocumentIngestResponse(document_id=doc_id, status="pending")
 
@@ -129,11 +132,12 @@ async def ingest_document(
 @router.post("/{document_id}/retry", response_model=DocumentStatusResponse)
 async def retry_document_ingestion(
     document_id: uuid.UUID,
-    ctx: TenantContextDep,
+    ctx: WorkspaceContextDep,
     session: DBSessionDep,
 ):
     """Retries a failed document ingestion by re-reading its stored file."""
     doc = await document_service.retry_ingestion(
+        workspace_id=ctx.workspace_id,
         tenant_id=ctx.tenant_id,
         document_id=str(document_id),
         api_key_id=ctx.api_key_id,
@@ -148,11 +152,12 @@ async def retry_document_ingestion(
 @router.post("/{document_id}/reindex", response_model=DocumentStatusResponse)
 async def reindex_document(
     document_id: uuid.UUID,
-    ctx: TenantContextDep,
+    ctx: WorkspaceContextDep,
     session: DBSessionDep,
 ):
     """Re-indexes an existing document by clearing old vectors and re-running ingestion."""
     doc = await document_service.reindex_document(
+        workspace_id=ctx.workspace_id,
         tenant_id=ctx.tenant_id,
         document_id=str(document_id),
         api_key_id=ctx.api_key_id,

@@ -21,8 +21,8 @@ class VectorService:
         - Perform tenant-isolated similarity searches.
         - Delete vectors belonging to a specific document.
 
-    All operations that touch Qdrant MUST include a tenant_id filter to
-    guarantee strict data isolation between tenants.
+    All operations that touch Qdrant MUST include a workspace_id filter to
+    guarantee strict data isolation between workspaces.
     """
 
     def __init__(self) -> None:
@@ -35,7 +35,7 @@ class VectorService:
 
         The collection is configured with:
             - Cosine distance metric for semantic similarity.
-            - A Keyword index on 'tenant_id' for fast multi-tenant filtering.
+            - A Keyword index on 'workspace_id' for fast multi-workspace filtering.
             - A Keyword index on 'document_id' for fast document-level deletion.
         """
         collections = await self._qdrant.get_collections()
@@ -54,7 +54,7 @@ class VectorService:
             # Create payload indexes for fast tenant and document filtering
             await self._qdrant.create_payload_index(
                 collection_name=self._collection,
-                field_name="tenant_id",
+                field_name="workspace_id",
                 field_schema=qdrant_models.PayloadSchemaType.KEYWORD,
             )
             await self._qdrant.create_payload_index(
@@ -62,7 +62,7 @@ class VectorService:
                 field_name="document_id",
                 field_schema=qdrant_models.PayloadSchemaType.KEYWORD,
             )
-            logger.info("Created payload indexes on 'tenant_id' and 'document_id'.")
+            logger.info("Created payload indexes on 'workspace_id' and 'document_id'.")
         else:
             logger.debug("Collection '%s' already exists. Skipping creation.", self._collection)
 
@@ -89,7 +89,7 @@ class VectorService:
 
     async def upsert_chunks(
         self,
-        tenant_id: str,
+        workspace_id: str,
         document_id: str,
         chunks: list[str],
         metadata_list: list[dict[str, Any]],
@@ -97,7 +97,7 @@ class VectorService:
         """Generates embeddings for chunks and upserts them into Qdrant with tenant metadata.
 
         Args:
-            tenant_id: The unique ID of the owning tenant. Stored in vector payload.
+            workspace_id: The unique ID of the owning workspace. Stored in vector payload.
             document_id: The unique ID of the source document. Stored in vector payload.
             chunks: A list of text chunk strings to be embedded and stored.
             metadata_list: A list of dicts (one per chunk) containing extra metadata
@@ -111,8 +111,8 @@ class VectorService:
             return 0
 
         logger.info(
-            "Generating embeddings for %d chunks (tenant='%s', document='%s')...",
-            len(chunks), tenant_id, document_id,
+            "Generating embeddings for %d chunks (workspace='%s', document='%s')...",
+            len(chunks), workspace_id, document_id,
         )
         vectors, prompt_tokens = await self.get_embeddings(chunks)
 
@@ -121,7 +121,7 @@ class VectorService:
                 id=str(uuid.uuid4()),
                 vector=vector,
                 payload={
-                    "tenant_id": tenant_id,
+                    "workspace_id": workspace_id,
                     "document_id": document_id,
                     "text": chunk,
                     "chunk_index": idx,
@@ -133,24 +133,24 @@ class VectorService:
 
         await self._qdrant.upsert(collection_name=self._collection, points=points)
         logger.info(
-            "Upserted %d vectors into collection '%s' for tenant='%s' (tokens=%d).",
-            len(points), self._collection, tenant_id, prompt_tokens
+            "Upserted %d vectors into collection '%s' for workspace='%s' (tokens=%d).",
+            len(points), self._collection, workspace_id, prompt_tokens
         )
         return prompt_tokens
 
     async def search_similar_chunks(
         self,
-        tenant_id: str,
+        workspace_id: str,
         query: str,
         limit: int | None = None,
     ) -> list[dict[str, Any]]:
         """Finds the most semantically similar chunks for a query, scoped to a tenant.
 
-        SECURITY: This method enforces tenant isolation by applying a mandatory
-        FieldCondition filter on 'tenant_id' in every Qdrant search request.
+        SECURITY: This method enforces workspace isolation by applying a mandatory
+        FieldCondition filter on 'workspace_id' in every Qdrant search request.
 
         Args:
-            tenant_id: The tenant ID to scope the search to.
+            workspace_id: The workspace ID to scope the search to.
             query: The user's query string.
             limit: Maximum number of results to return. Defaults to settings.RAG_TOP_K.
 
@@ -162,12 +162,12 @@ class VectorService:
         vectors, _ = await self.get_embeddings([query])
         query_vector = vectors[0]
 
-        # MANDATORY tenant isolation filter — never remove this filter
-        tenant_filter = qdrant_models.Filter(
+        # MANDATORY workspace isolation filter — never remove this filter
+        workspace_filter = qdrant_models.Filter(
             must=[
                 qdrant_models.FieldCondition(
-                    key="tenant_id",
-                    match=qdrant_models.MatchValue(value=tenant_id),
+                    key="workspace_id",
+                    match=qdrant_models.MatchValue(value=workspace_id),
                 )
             ]
         )
@@ -175,14 +175,14 @@ class VectorService:
         results = await self._qdrant.query_points(
             collection_name=self._collection,
             query=query_vector,
-            query_filter=tenant_filter,
+            query_filter=workspace_filter,
             limit=top_k,
             with_payload=True,
         )
 
         logger.info(
-            "Similarity search found %d results for tenant='%s' (query='%s...').",
-            len(results.points), tenant_id, query[:50],
+            "Similarity search found %d results for workspace='%s' (query='%s...').",
+            len(results.points), workspace_id, query[:50],
         )
 
         return [
@@ -196,18 +196,18 @@ class VectorService:
             for hit in results.points
         ]
 
-    async def delete_document_vectors(self, tenant_id: str, document_id: str) -> None:
-        """Deletes all vectors associated with a specific document for a tenant.
+    async def delete_document_vectors(self, workspace_id: str, document_id: str) -> None:
+        """Deletes all vectors associated with a specific document for a workspace.
 
         Args:
-            tenant_id: The tenant ID owning the document.
+            workspace_id: The workspace ID owning the document.
             document_id: The document ID whose vectors will be deleted.
         """
         delete_filter = qdrant_models.Filter(
             must=[
                 qdrant_models.FieldCondition(
-                    key="tenant_id",
-                    match=qdrant_models.MatchValue(value=tenant_id),
+                    key="workspace_id",
+                    match=qdrant_models.MatchValue(value=workspace_id),
                 ),
                 qdrant_models.FieldCondition(
                     key="document_id",
@@ -221,8 +221,8 @@ class VectorService:
             points_selector=qdrant_models.FilterSelector(filter=delete_filter),
         )
         logger.info(
-            "Deleted vectors for document_id='%s' belonging to tenant='%s'.",
-            document_id, tenant_id,
+            "Deleted vectors for document_id='%s' belonging to workspace='%s'.",
+            document_id, workspace_id,
         )
 
 # Create singleton instance

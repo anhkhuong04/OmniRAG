@@ -50,3 +50,14 @@ class APIKeyCreateResponse(APIKeyResponse):
     Clients must store it securely immediately.
     """
     raw_key: str = Field(..., description="Raw API key — only returned once. Store it securely!")
+
+
+# ─── Plan Management Schemas ───────────────────────────────────────────────────
+
+class PlanUpdate(BaseModel):
+    """Payload for updating an existing billing Plan."""
+    display_name: Optional[str] = Field(None, max_length=100)
+    price_usd_monthly: Optional[float] = Field(None)
+    max_documents: Optional[int] = Field(None)
+    max_queries_per_month: Optional[int] = Field(None)
+    max_file_size_mb: Optional[int] = Field(None)

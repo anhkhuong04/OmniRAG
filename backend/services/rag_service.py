@@ -127,7 +127,7 @@ class RAGService:
 
     async def generate_answer(
         self,
-        tenant_id: str,
+        workspace_id: str,
         query: str,
         db_session: AsyncSession,
         chat_history: list[dict[str, str]] | None = None,
@@ -135,7 +135,7 @@ class RAGService:
         """Runs the full Advanced RAG pipeline and returns the answer with metadata.
 
         Args:
-            tenant_id: The tenant ID for scoping all retrieval and cache operations.
+            workspace_id: The workspace ID for scoping all retrieval and cache operations.
             query: The user's question string.
             db_session: Active DB session for Postgres hybrid search.
             chat_history: Optional previous conversation messages.

@@ -10,8 +10,8 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.dependencies import DBSessionDep, TenantContextDep
-from backend.models.chat import Conversation, Message
+from backend.api.dependencies import DBSessionDep, WorkspaceContextDep
+from backend.models import Conversation, Message
 from backend.models.usage_log import UsageLog, UsageLogType
 from backend.models.widget import WidgetConfig
 from backend.schemas.chat import ChatResponse
@@ -34,13 +34,13 @@ router = APIRouter(tags=["widget"])
 
 @router.get("/workspaces/{workspace_id}/widget", response_model=WidgetConfigResponse)
 async def get_widget_config(
-    ctx: TenantContextDep,
+    ctx: WorkspaceContextDep,
     session: DBSessionDep,
 ):
     """Lấy cấu hình Widget của Workspace."""
-    tenant_uuid = uuid.UUID(ctx.tenant_id)
+    workspace_uuid = uuid.UUID(ctx.workspace_id)
     result = await session.execute(
-        select(WidgetConfig).where(WidgetConfig.tenant_id == tenant_uuid)
+        select(WidgetConfig).where(WidgetConfig.workspace_id == workspace_uuid)
     )
     config = result.scalar_one_or_none()
     
@@ -48,7 +48,7 @@ async def get_widget_config(
         # Tự động tạo config mặc định
         public_token = secrets.token_urlsafe(32)
         config = WidgetConfig(
-            tenant_id=tenant_uuid,
+            workspace_id=workspace_uuid,
             public_token=public_token,
         )
         session.add(config)
@@ -61,13 +61,13 @@ async def get_widget_config(
 @router.patch("/workspaces/{workspace_id}/widget", response_model=WidgetConfigResponse)
 async def update_widget_config(
     update_data: WidgetConfigUpdate,
-    ctx: TenantContextDep,
+    ctx: WorkspaceContextDep,
     session: DBSessionDep,
 ):
     """Cập nhật cấu hình Widget."""
-    tenant_uuid = uuid.UUID(ctx.tenant_id)
+    workspace_uuid = uuid.UUID(ctx.workspace_id)
     result = await session.execute(
-        select(WidgetConfig).where(WidgetConfig.tenant_id == tenant_uuid)
+        select(WidgetConfig).where(WidgetConfig.workspace_id == workspace_uuid)
     )
     config = result.scalar_one_or_none()
     

@@ -21,6 +21,7 @@ export interface UserProfile {
   full_name: string;
   is_verified: boolean;
   is_active: boolean;
+  is_system_admin: boolean;
   created_at: string;
 }
 
@@ -31,8 +32,8 @@ interface AuthContextValue {
   isLoading: boolean;
   /** The ID of the currently selected workspace. Persisted to localStorage. */
   currentWorkspaceId: string | null;
-  /** Authenticate with email/password. Throws on invalid credentials. */
-  login: (email: string, password: string) => Promise<void>;
+  /** Authenticate with email/password. Throws on invalid credentials. Returns user profile. */
+  login: (email: string, password: string) => Promise<UserProfile>;
   /** Clears all auth state and redirects to /login. */
   logout: () => void;
   /** Switch the active workspace in the session. */
@@ -58,6 +59,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ── Restore session on mount ─────────────────────────────────────────────
   useEffect(() => {
     const restore = async () => {
+      // 1. Check for active impersonation in sessionStorage
+      const impersonationToken = sessionStorage.getItem("impersonate_token");
+      if (impersonationToken) {
+        try {
+          apiSetAccessToken(impersonationToken);
+          const profile = await authMe();
+          setUser(profile);
+          // Set workspace from query param or session storage if needed,
+          // but usually it's set by the URL that opened the tab.
+        } catch {
+          sessionStorage.removeItem("impersonate_token");
+          apiSetAccessToken(null);
+        } finally {
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      // 2. Normal restore flow
       const storedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
       if (!storedRefreshToken) {
         setIsLoading(false);
@@ -90,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     apiSetAccessToken(tokens.access_token);
     const profile = await authMe();
     setUser(profile);
+    return profile;
   }, []);
 
   // ── Logout ───────────────────────────────────────────────────────────────

@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
-from backend.api.dependencies import DBSessionDep, TenantContextDep
+from backend.api.dependencies import DBSessionDep, WorkspaceContextDep
 from backend.models.conversation import Conversation
 from backend.models.message import Message
 from backend.models.usage_log import UsageLog, UsageLogType
@@ -24,16 +24,18 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 @router.post("/query")
 async def chat_query(
     request: QueryRequest,
-    ctx: TenantContextDep,
+    ctx: WorkspaceContextDep,
     session: DBSessionDep,
 ):
     """
     Truy vấn hệ thống Advanced RAG. Hỗ trợ Server-Sent Events (SSE) để streaming.
     Tích hợp Semantic Cache, Hybrid Search, Reranking, và Token Tracking.
     """
-    tenant_id = ctx.tenant_id
+    workspace_id = ctx.workspace_id
     api_key_id = ctx.api_key_id
-    tenant_uuid = uuid.UUID(tenant_id)
+    workspace_uuid = uuid.UUID(workspace_id)
+
+    tenant_id = ctx.tenant_id
 
     # Pre-flight: check monthly query quota before any expensive work
     await plan_guard_service.check_query_limit(session, tenant_id)
@@ -43,14 +45,14 @@ async def chat_query(
         result = await session.execute(
             select(Conversation).where(
                 Conversation.id == request.conversation_id,
-                Conversation.tenant_id == tenant_uuid,
+                Conversation.workspace_id == workspace_uuid,
             )
         )
         conversation = result.scalar_one_or_none()
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation not found")
     else:
-        conversation = Conversation(id=uuid.uuid4(), tenant_id=tenant_uuid)
+        conversation = Conversation(id=uuid.uuid4(), workspace_id=workspace_uuid)
         session.add(conversation)
         await session.commit()
         await session.refresh(conversation)
@@ -59,7 +61,7 @@ async def chat_query(
     user_message = Message(
         id=uuid.uuid4(),
         conversation_id=conversation.id,
-        tenant_id=tenant_uuid,
+        workspace_id=workspace_uuid,
         sender="user",
         content=request.query,
     )
@@ -75,7 +77,7 @@ async def chat_query(
                 yield f"event: metadata\ndata: {json.dumps({'conversation_id': str(conversation.id)})}\n\n"
 
                 async for chunk in rag_service.stream_answer(
-                    tenant_id=str(tenant_id),
+                    workspace_id=str(workspace_id),
                     query=request.query,
                     db_session=session,
                 ):

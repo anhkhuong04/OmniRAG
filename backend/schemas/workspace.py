@@ -3,21 +3,23 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from backend.models.user_tenant import WorkspaceRole
+from backend.models.user_workspace import WorkspaceRole
 
 # ─── Workspace CRUD ────────────────────────────────────────────────────────────
 
 
 class WorkspaceCreate(BaseModel):
-    """Payload for creating a new Workspace (Tenant)."""
+    """Payload for creating a new Workspace."""
 
-    name: str = Field(..., min_length=2, max_length=100, description="Name of the workspace / organization")
+    name: str = Field(..., min_length=2, max_length=100, description="Name of the workspace")
+    tenant_id: uuid.UUID = Field(..., description="The organization this workspace belongs to")
 
 
 class WorkspaceResponse(BaseModel):
     """Workspace details as seen by a member, including the caller's role."""
 
     id: uuid.UUID
+    tenant_id: uuid.UUID
     name: str
     is_active: bool
     created_at: datetime

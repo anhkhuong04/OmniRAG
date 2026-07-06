@@ -6,7 +6,7 @@ Workspace-scoped API Key CRUD for use by authenticated tenant owners/admins.
 Unlike the admin routes (X-Admin-Key header), these operations are triggered
 by workspace members via JWT — meaning users manage their own keys.
 
-All queries MUST filter by tenant_id for strict tenant isolation.
+All queries MUST filter by workspace_id for strict tenant isolation.
 """
 import hashlib
 import logging
@@ -21,12 +21,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.api_key import APIKey
 from backend.models.usage_log import UsageLog, UsageLogType
-from backend.models.user_tenant import UserTenantLink
+from backend.models.user_tenant import UserWorkspaceLink
 from backend.schemas.usage import (
     WorkspaceAPIKeyResponse,
     WorkspaceAPIKeyCreateResponse,
     UsageStatsResponse,
     DailyUsagePoint,
+    UsageHistoryResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,22 +40,22 @@ def _hash_key(raw_key: str) -> str:
     return hashlib.sha256(raw_key.encode()).hexdigest()
 
 
-async def _assert_can_manage_keys(db: AsyncSession, tenant_id: uuid.UUID, user_id: uuid.UUID) -> None:
+async def _assert_can_manage_keys(db: AsyncSession, workspace_id: uuid.UUID, user_id: uuid.UUID) -> None:
     """Raises HTTP 403 unless user is OWNER or ADMIN of the workspace.
 
     Args:
         db: Active async database session.
-        tenant_id: UUID of the target workspace/tenant.
+        workspace_id: UUID of the target workspace/tenant.
         user_id: UUID of the requesting user.
 
     Raises:
         HTTPException 403: If user lacks permission.
     """
     result = await db.execute(
-        select(UserTenantLink).where(
-            UserTenantLink.tenant_id == tenant_id,
-            UserTenantLink.user_id == user_id,
-            UserTenantLink.role.in_(["owner", "admin"]),
+        select(UserWorkspaceLink).where(
+            UserWorkspaceLink.workspace_id == workspace_id,
+            UserWorkspaceLink.user_id == user_id,
+            UserWorkspaceLink.role.in_(["owner", "admin"]),
         )
     )
     if not result.scalar_one_or_none():
@@ -66,7 +67,7 @@ async def _assert_can_manage_keys(db: AsyncSession, tenant_id: uuid.UUID, user_i
 
 async def create_api_key(
     db: AsyncSession,
-    tenant_id: str,
+    workspace_id: str,
     user_id: str,
     name: str,
     expires_in_days: Optional[int] = None,
@@ -78,7 +79,7 @@ async def create_api_key(
 
     Args:
         db: Active async database session.
-        tenant_id: UUID string of the workspace.
+        workspace_id: UUID string of the workspace.
         user_id: UUID string of the requesting user (must be owner/admin).
         name: Friendly name for this key (e.g. "Production Widget").
         expires_in_days: Optional TTL in days. None means no expiry.
@@ -89,10 +90,10 @@ async def create_api_key(
     Raises:
         HTTPException 403: If user is not owner/admin of the workspace.
     """
-    t_uuid = uuid.UUID(tenant_id)
+    workspace_uuid = uuid.UUID(workspace_id)
     u_uuid = uuid.UUID(user_id)
 
-    await _assert_can_manage_keys(db, t_uuid, u_uuid)
+    await _assert_can_manage_keys(db, workspace_uuid, u_uuid)
 
     raw_key = _KEY_PREFIX + secrets.token_urlsafe(32)
     key_hash = _hash_key(raw_key)
@@ -102,7 +103,7 @@ async def create_api_key(
         expires_at = datetime.now(timezone.utc) + timedelta(days=expires_in_days)
 
     api_key = APIKey(
-        tenant_id=t_uuid,
+        workspace_id=workspace_uuid,
         key_hash=key_hash,
         name=name,
         is_active=True,
@@ -112,7 +113,7 @@ async def create_api_key(
     await db.commit()
     await db.refresh(api_key)
 
-    logger.info("Created API key '%s' for tenant='%s'.", name, tenant_id)
+    logger.info("Created API key '%s' for tenant='%s'.", name, workspace_id)
 
     return WorkspaceAPIKeyCreateResponse(
         **api_key.model_dump(),
@@ -122,14 +123,14 @@ async def create_api_key(
 
 async def list_api_keys(
     db: AsyncSession,
-    tenant_id: str,
+    workspace_id: str,
     user_id: str,
 ) -> list[WorkspaceAPIKeyResponse]:
     """Lists all API keys for a workspace (raw values never returned).
 
     Args:
         db: Active async database session.
-        tenant_id: UUID string of the workspace.
+        workspace_id: UUID string of the workspace.
         user_id: UUID string of the requesting user.
 
     Returns:
@@ -138,21 +139,21 @@ async def list_api_keys(
     Raises:
         HTTPException 403: If user is not a member of the workspace.
     """
-    t_uuid = uuid.UUID(tenant_id)
+    workspace_uuid = uuid.UUID(workspace_id)
     u_uuid = uuid.UUID(user_id)
 
     # Any member can view keys (but not create/revoke)
     result = await db.execute(
-        select(UserTenantLink).where(
-            UserTenantLink.tenant_id == t_uuid,
-            UserTenantLink.user_id == u_uuid,
+        select(UserWorkspaceLink).where(
+            UserWorkspaceLink.workspace_id == workspace_uuid,
+            UserWorkspaceLink.user_id == u_uuid,
         )
     )
     if not result.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied.")
 
     keys_result = await db.execute(
-        select(APIKey).where(APIKey.tenant_id == t_uuid).order_by(APIKey.created_at.desc())
+        select(APIKey).where(APIKey.workspace_id == workspace_uuid).order_by(APIKey.created_at.desc())
     )
     keys = keys_result.scalars().all()
     return [WorkspaceAPIKeyResponse(**k.model_dump()) for k in keys]
@@ -160,7 +161,7 @@ async def list_api_keys(
 
 async def revoke_api_key(
     db: AsyncSession,
-    tenant_id: str,
+    workspace_id: str,
     key_id: str,
     user_id: str,
 ) -> None:
@@ -168,7 +169,7 @@ async def revoke_api_key(
 
     Args:
         db: Active async database session.
-        tenant_id: UUID string of the workspace.
+        workspace_id: UUID string of the workspace.
         key_id: UUID string of the key to revoke.
         user_id: UUID string of the requesting user.
 
@@ -176,13 +177,13 @@ async def revoke_api_key(
         HTTPException 403: If user is not owner/admin.
         HTTPException 404: If key does not exist for this tenant.
     """
-    t_uuid = uuid.UUID(tenant_id)
-    await _assert_can_manage_keys(db, t_uuid, uuid.UUID(user_id))
+    workspace_uuid = uuid.UUID(workspace_id)
+    await _assert_can_manage_keys(db, workspace_uuid, uuid.UUID(user_id))
 
     result = await db.execute(
         select(APIKey).where(
             APIKey.id == uuid.UUID(key_id),
-            APIKey.tenant_id == t_uuid,  # Tenant isolation
+            APIKey.workspace_id == workspace_uuid,  # Workspace isolation
         )
     )
     key = result.scalar_one_or_none()
@@ -195,19 +196,19 @@ async def revoke_api_key(
     key.is_active = False
     db.add(key)
     await db.commit()
-    logger.info("Revoked API key id='%s' for tenant='%s'.", key_id, tenant_id)
+    logger.info("Revoked API key id='%s' for tenant='%s'.", key_id, workspace_id)
 
 
 async def get_usage_stats(
     db: AsyncSession,
-    tenant_id: str,
+    workspace_id: str,
     user_id: str,
 ) -> UsageStatsResponse:
     """Returns aggregated usage metrics for the current billing period.
 
     Args:
         db: Active async database session.
-        tenant_id: UUID string of the workspace.
+        workspace_id: UUID string of the workspace.
         user_id: UUID string of the requesting user.
 
     Returns:
@@ -219,14 +220,14 @@ async def get_usage_stats(
     from sqlalchemy import select
     from backend.models.subscription import Subscription, Plan
 
-    t_uuid = uuid.UUID(tenant_id)
+    workspace_uuid = uuid.UUID(workspace_id)
     u_uuid = uuid.UUID(user_id)
 
     # Membership check
     member_result = await db.execute(
-        select(UserTenantLink).where(
-            UserTenantLink.tenant_id == t_uuid,
-            UserTenantLink.user_id == u_uuid,
+        select(UserWorkspaceLink).where(
+            UserWorkspaceLink.workspace_id == workspace_uuid,
+            UserWorkspaceLink.user_id == u_uuid,
         )
     )
     if not member_result.scalar_one_or_none():
@@ -236,7 +237,7 @@ async def get_usage_stats(
     sub_result = await db.execute(
         select(Subscription, Plan)
         .join(Plan, Subscription.plan_id == Plan.id)
-        .where(Subscription.tenant_id == t_uuid)
+        .where(Subscription.workspace_id == workspace_uuid)
     )
     row = sub_result.one_or_none()
     if not row:
@@ -253,7 +254,7 @@ async def get_usage_stats(
             func.coalesce(func.sum(UsageLog.prompt_tokens), 0),
             func.coalesce(func.sum(UsageLog.completion_tokens), 0),
         ).where(
-            UsageLog.tenant_id == t_uuid,
+            UsageLog.workspace_id == workspace_uuid,
             UsageLog.log_type == UsageLogType.QUERY,
             extract("year", UsageLog.created_at) == now.year,
             extract("month", UsageLog.created_at) == now.month,
@@ -262,7 +263,7 @@ async def get_usage_stats(
     total_cost, total_prompt, total_completion = cost_result.one()
 
     return UsageStatsResponse(
-        tenant_id=t_uuid,
+        workspace_id=workspace_uuid,
         plan_name=plan.name,
         plan_tier=plan.tier,
         documents_count=sub.documents_count,
@@ -279,14 +280,14 @@ async def get_usage_stats(
 
 async def get_usage_history(
     db: AsyncSession,
-    tenant_id: str,
+    workspace_id: str,
     user_id: str,
 ) -> UsageHistoryResponse:
     """Returns aggregated usage history for the last 6 months.
 
     Args:
         db: Active async database session.
-        tenant_id: UUID string of the workspace.
+        workspace_id: UUID string of the workspace.
         user_id: UUID string of the requesting user.
 
     Returns:
@@ -299,14 +300,14 @@ async def get_usage_history(
     from backend.schemas.usage import MonthlyUsagePoint, UsageHistoryResponse
     from backend.models.usage_log import UsageLog
     
-    t_uuid = uuid.UUID(tenant_id)
+    workspace_uuid = uuid.UUID(workspace_id)
     u_uuid = uuid.UUID(user_id)
 
     # Membership check
     member_result = await db.execute(
-        select(UserTenantLink).where(
-            UserTenantLink.tenant_id == t_uuid,
-            UserTenantLink.user_id == u_uuid,
+        select(UserWorkspaceLink).where(
+            UserWorkspaceLink.workspace_id == workspace_uuid,
+            UserWorkspaceLink.user_id == u_uuid,
         )
     )
     if not member_result.scalar_one_or_none():
@@ -325,7 +326,7 @@ async def get_usage_history(
             func.coalesce(func.sum(UsageLog.prompt_tokens), 0),
             func.coalesce(func.sum(UsageLog.completion_tokens), 0),
         ).where(
-            UsageLog.tenant_id == t_uuid,
+            UsageLog.workspace_id == workspace_uuid,
             UsageLog.created_at >= six_months_ago
         )
         .group_by(
@@ -350,4 +351,4 @@ async def get_usage_history(
             completion_tokens=int(c_tokens)
         ))
 
-    return UsageHistoryResponse(tenant_id=t_uuid, history=history)
+    return UsageHistoryResponse(workspace_id=workspace_uuid, history=history)

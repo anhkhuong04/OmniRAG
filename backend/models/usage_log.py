@@ -9,6 +9,7 @@ from sqlmodel import SQLModel, Field, Relationship
 if TYPE_CHECKING:
     from backend.models.api_key import APIKey
     from backend.models.tenant import Tenant
+    from backend.models.workspace import Workspace
     from backend.models.document import Document
 
 
@@ -45,8 +46,13 @@ class UsageLog(SQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
 
-    # Tenant isolation (mandatory filter on every read)
+    # Tenant isolation (mandatory filter on every read for billing)
     tenant_id: uuid.UUID = Field(foreign_key="tenants.id", index=True, nullable=False)
+    
+    # Workspace isolation (optional for tracking usage per workspace)
+    workspace_id: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="workspaces.id", index=True, nullable=True
+    )
 
     # Which API key triggered this event (null for JWT-authenticated requests)
     api_key_id: Optional[uuid.UUID] = Field(

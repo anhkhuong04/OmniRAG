@@ -10,6 +10,7 @@ from backend.models.tenant import Tenant
 from backend.models.document import Document
 from backend.models.usage_log import UsageLog
 from backend.models.admin_audit_log import AdminAuditLog
+from backend.models.workspace import Workspace
 from backend.services import document_service
 
 
@@ -29,6 +30,25 @@ async def get_tenants(db: AsyncSession, skip: int = 0, limit: int = 50) -> List[
             "created_at": t.created_at,
         }
         for t in tenants
+    ]
+
+
+async def get_workspaces(db: AsyncSession, skip: int = 0, limit: int = 50) -> List[Dict[str, Any]]:
+    """List workspaces with basic stats."""
+    result = await db.execute(
+        select(Workspace).order_by(desc(Workspace.created_at)).offset(skip).limit(limit)
+    )
+    workspaces = result.scalars().all()
+    
+    return [
+        {
+            "id": str(w.id),
+            "tenant_id": str(w.tenant_id),
+            "name": w.name,
+            "is_active": w.is_active,
+            "created_at": w.created_at,
+        }
+        for w in workspaces
     ]
 
 
@@ -131,6 +151,50 @@ async def get_system_usage(db: AsyncSession) -> Dict[str, Any]:
         "total_completion_tokens": row.total_completion or 0,
         "total_cost_usd": float(row.total_cost or 0.0),
         "total_operations": row.total_queries or 0,
+    }
+
+
+async def get_system_kpis(db: AsyncSession) -> Dict[str, Any]:
+    """Get high-level KPIs for the Platform Dashboard."""
+    from backend.models.user import User
+    from backend.models.subscription import Subscription
+    
+    # Count Workspaces
+    total_tenants = await db.scalar(select(func.count(Tenant.id)))
+    active_tenants = await db.scalar(select(func.count(Tenant.id)).where(Tenant.is_active == True))
+    
+    # Count Users
+    total_users = await db.scalar(select(func.count(User.id)))
+    active_users = await db.scalar(select(func.count(User.id)).where(User.is_active == True))
+    
+    # Count Documents
+    total_documents = await db.scalar(select(func.count(Document.id)))
+    
+    # MRR Estimation (sum of active subscriptions prices, assumes we have plans joined)
+    # Since we need to join Subscription and Plan to get the price, we'll do it if possible
+    # For now, we can just do a basic join or return 0 if complicated
+    # Wait, the `admin_service.py` can import `Plan` and `Subscription`
+    from backend.models.subscription import Plan
+    mrr_res = await db.execute(
+        select(func.sum(Plan.price_usd_monthly))
+        .select_from(Subscription)
+        .join(Plan)
+        .where(Subscription.status == "active")
+    )
+    mrr = mrr_res.scalar() or 0.0
+    
+    # Usage Stats (Total Cost)
+    usage_res = await db.execute(select(func.sum(UsageLog.cost_usd)))
+    total_ai_cost = usage_res.scalar() or 0.0
+
+    return {
+        "total_workspaces": total_tenants or 0,
+        "active_workspaces": active_tenants or 0,
+        "total_users": total_users or 0,
+        "active_users": active_users or 0,
+        "total_documents": total_documents or 0,
+        "mrr_usd": float(mrr),
+        "total_ai_cost_usd": float(total_ai_cost),
     }
 
 

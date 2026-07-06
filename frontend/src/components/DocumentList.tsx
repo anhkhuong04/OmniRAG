@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
-  DocumentStatusResponse,
   listDocuments,
+  ingestDocument,
   deleteDocument,
   getDocumentStatus,
-  DocumentStatus,
-  ingestDocument,
   retryDocument,
-  reindexDocument,
+  reindexDocument
+} from "../services/api";
+import type {
+  DocumentStatusResponse,
+  DocumentStatus,
 } from "../services/api";
 import { FileText, Trash2, Loader2, CheckCircle, XCircle, Clock, RefreshCcw, RefreshCw } from "lucide-react";
 
@@ -248,7 +250,7 @@ export function DocumentList({ apiKey, onRefreshUsage }: DocumentListProps) {
                           <RefreshCcw size={16} /> Retry
                         </button>
                       )}
-                      {(doc.status === "completed" || doc.status === "ready") && (
+                      {(doc.status === "completed") && (
                         <button
                           onClick={() => handleReindex(doc.id)}
                           style={{ background: "none", border: "none", color: "#3B82F6", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", fontSize: "12px" }}

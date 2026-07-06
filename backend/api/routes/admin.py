@@ -125,6 +125,15 @@ async def list_tenants(
 ) -> Any:
     return await admin_service.get_tenants(db, skip, limit)
 
+@router.get("/system/workspaces")
+async def list_workspaces(
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+    skip: int = 0,
+    limit: int = 50,
+) -> Any:
+    return await admin_service.get_workspaces(db, skip, limit)
+
 @router.post("/system/tenants/{tenant_id}/disable")
 async def disable_tenant(
     tenant_id: str,
@@ -145,12 +154,112 @@ async def enable_tenant(
         db, tenant_id, is_active=True, admin_user_id=str(admin_user.id)
     )
 
+@router.post("/system/tenants/{tenant_id}/impersonate")
+async def impersonate_tenant(
+    tenant_id: str,
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+) -> Any:
+    # Verify tenant exists
+    tenant_uuid = uuid.UUID(tenant_id)
+    tenant = await db.get(Tenant, tenant_uuid)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+        
+    from backend.core.security import create_access_token
+    token = create_access_token(user_id=str(admin_user.id), impersonate_tenant_id=tenant_id)
+    
+    # Log it
+    from backend.models.admin_audit_log import AdminAuditLog
+    audit_log = AdminAuditLog(
+        actor_user_id=admin_user.id,
+        action="impersonate",
+        target_type="tenant",
+        target_id=tenant_uuid,
+    )
+    db.add(audit_log)
+    await db.commit()
+    
+    return {"access_token": token, "token_type": "bearer", "impersonated_tenant_id": tenant_id}
+
+
+# ─── Plan Management ──────────────────────────────────────────────────────────
+
+from backend.models.subscription import Plan
+from backend.schemas.workspace import PlanResponse
+from backend.schemas.admin import PlanUpdate
+
+@router.get("/system/plans", response_model=list[PlanResponse])
+async def list_plans(
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+):
+    result = await db.execute(select(Plan).order_by(Plan.price_usd_monthly.asc()))
+    return result.scalars().all()
+
+
+@router.put("/system/plans/{plan_id}", response_model=PlanResponse)
+async def update_plan(
+    plan_id: uuid.UUID,
+    payload: PlanUpdate,
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+):
+    plan = await db.get(Plan, plan_id)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+        
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(plan, key, value)
+        
+    db.add(plan)
+    
+    # Log it
+    from backend.models.admin_audit_log import AdminAuditLog
+    audit_log = AdminAuditLog(
+        actor_user_id=admin_user.id,
+        action="update_plan",
+        target_type="plan",
+        target_id=plan.id,
+        metadata_json=update_data
+    )
+    db.add(audit_log)
+    
+    await db.commit()
+    await db.refresh(plan)
+    return plan
+
 @router.get("/system/usage-summary")
 async def get_system_usage_summary(
     db: DBSessionDep,
     admin_user: SystemAdminDep,
 ) -> Any:
     return await admin_service.get_system_usage(db)
+
+@router.get("/system/kpis")
+async def get_system_kpis(
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+) -> Any:
+    return await admin_service.get_system_kpis(db)
+
+
+from backend.models.admin_audit_log import AdminAuditLog
+from sqlalchemy import desc
+
+@router.get("/system/audit-logs")
+async def get_audit_logs(
+    db: DBSessionDep,
+    admin_user: SystemAdminDep,
+    limit: int = 100
+) -> Any:
+    result = await db.execute(
+        select(AdminAuditLog)
+        .order_by(desc(AdminAuditLog.created_at))
+        .limit(limit)
+    )
+    return result.scalars().all()
 
 @router.get("/system/ingestion/failed-jobs")
 async def list_failed_jobs(

@@ -1,83 +1,55 @@
-import { Routes, Route, Link, Outlet, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import AdminPage from './pages/AdminPage';
-import TenantDashboard from './pages/TenantDashboard';
+
+// Layouts
+import DashboardLayout from './components/layouts/DashboardLayout';
+
+// Public Pages
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import WorkspaceCreatePage from './pages/WorkspaceCreatePage';
 import WidgetPage from './pages/WidgetPage';
-import AdminDashboard from './pages/AdminDashboard';
 
-// ─── Dashboard Layout (shown when user is logged in) ─────────────────────────
+// App Pages (Tenant)
+import Overview from './pages/app/Overview';
+import KnowledgeBase from './pages/app/KnowledgeBase';
+import ChatPlayground from './pages/app/ChatPlayground';
+import ApiKeys from './pages/app/ApiKeys';
+import WidgetIntegration from './pages/app/WidgetIntegration';
 
-function DashboardLayout() {
-  const { user, logout } = useAuth();
-  return (
-    <>
-      <header style={{ 
-        borderBottom: '1px solid var(--border-color)', 
-        padding: 'var(--spacing-md) var(--spacing-lg)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: 'var(--bg-primary)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-          <img src="/logo.svg" alt="OmniRAG Logo" style={{ width: '32px', height: '32px' }} />
-          <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>
-            <h2 style={{ fontSize: '18px', margin: 0 }}>OmniRAG</h2>
-          </Link>
-        </div>
-        <nav style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center' }}>
-          <Link to="/dashboard" style={{ color: 'var(--text-body)', fontWeight: 500 }} className="transition-colors">Dashboard</Link>
-          <Link to="/admin" style={{ color: 'var(--text-body)', fontWeight: 500 }} className="transition-colors">Dev Admin</Link>
-          {user?.is_system_admin && (
-            <Link to="/system-admin" style={{ color: 'var(--accent-primary)', fontWeight: 600 }} className="transition-colors">Super Admin</Link>
-          )}
-          {user && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{user.email}</span>
-              <button
-                onClick={logout}
-                style={{
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '5px 12px',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  color: 'var(--text-body)',
-                }}
-              >
-                Log out
-              </button>
-            </div>
-          )}
-        </nav>
-      </header>
-      <main className="main-content">
-        <Outlet />
-      </main>
-    </>
-  );
-}
+// Admin Pages (System)
+import AdminDashboard from './pages/admin/Dashboard';
+import Tenants from './pages/admin/Tenants';
+import Plans from './pages/admin/Plans';
+import SystemUsage from './pages/admin/SystemUsage';
+
+import AuditLogs from './pages/admin/AuditLogs';
+import ImpersonateInit from './pages/admin/ImpersonateInit';
+import Workspaces from './pages/admin/Workspaces';
+import SystemHealth from './pages/admin/SystemHealth';
+import Settings from './pages/admin/Settings';
 
 // ─── Public-only route (redirect if already logged in) ────────────────────────
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   if (isLoading) return null;
-  if (user) return <Navigate to="/workspaces" replace />;
+  if (user) {
+    if (user.is_system_admin) {
+      return <Navigate to="/admin/tenants" replace />;
+    }
+    return <Navigate to="/workspaces" replace />;
+  }
   return <>{children}</>;
 }
 
-// ─── Workspaces redirect — sends to /dashboard or /workspaces/new ─────────────
+// ─── Workspaces redirect — sends to /app/overview or /workspaces/new ──────────
 
 function WorkspacesRedirect() {
   const { currentWorkspaceId } = useAuth();
-  if (currentWorkspaceId) return <Navigate to="/dashboard" replace />;
+  if (currentWorkspaceId) return <Navigate to="/app/overview" replace />;
   return <Navigate to="/workspaces/new" replace />;
 }
 
@@ -97,31 +69,61 @@ function AppRoutes() {
 
       {/* Auth flow routes (require login but not workspace) */}
       <Route path="/verify-email" element={
-        <ProtectedRoute>
+        <ProtectedRoute requireWorkspaceUser>
           <VerifyEmailPage />
         </ProtectedRoute>
       } />
       <Route path="/workspaces/new" element={
-        <ProtectedRoute requireVerified>
+        <ProtectedRoute requireVerified requireWorkspaceUser>
           <WorkspaceCreatePage />
         </ProtectedRoute>
       } />
       <Route path="/workspaces" element={
-        <ProtectedRoute>
+        <ProtectedRoute requireWorkspaceUser>
           <WorkspacesRedirect />
         </ProtectedRoute>
       } />
 
-      {/* Protected app routes (require auth) */}
-      <Route element={
-        <ProtectedRoute>
+      {/* Protected app routes (Workspace Shell) */}
+      <Route path="/app" element={
+        <ProtectedRoute requireWorkspaceUser>
           <DashboardLayout />
         </ProtectedRoute>
       }>
-        <Route path="/dashboard" element={<TenantDashboard />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/system-admin" element={<AdminDashboard />} />
+        <Route index element={<Navigate to="overview" replace />} />
+        <Route path="overview" element={<Overview />} />
+        <Route path="knowledge" element={<KnowledgeBase />} />
+        <Route path="playground" element={<ChatPlayground />} />
+        <Route path="apikeys" element={<ApiKeys />} />
+        <Route path="widget" element={<WidgetIntegration />} />
+        
+        {/* Placeholder for Analytics Viewer Role */}
+        <Route path="analytics/overview" element={<Overview />} />
       </Route>
+
+      {/* Protected admin routes (System Admin Shell) */}
+      <Route path="/admin" element={
+        <ProtectedRoute requireAdmin>
+          <DashboardLayout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="tenants" element={<Tenants />} />
+        <Route path="workspaces" element={<Workspaces />} />
+        <Route path="plans" element={<Plans />} />
+        <Route path="usage" element={<SystemUsage />} />
+        <Route path="health" element={<SystemHealth />} />
+        <Route path="logs" element={<AuditLogs />} />
+        <Route path="settings" element={<Settings />} />
+      </Route>
+      
+      {/* Admin specific standalone routes */}
+      <Route path="/impersonate-init" element={<ImpersonateInit />} />
+
+      {/* Legacy fallbacks */}
+      <Route path="/dashboard" element={<Navigate to="/app/overview" replace />} />
+      <Route path="/system-admin" element={<Navigate to="/admin/tenants" replace />} />
     </Routes>
   );
 }

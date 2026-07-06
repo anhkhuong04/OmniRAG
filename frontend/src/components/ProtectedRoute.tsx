@@ -5,6 +5,10 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   /** If true, redirect to /verify-email when user has not verified their email. */
   requireVerified?: boolean;
+  /** If true, only allow System Admins. Normal users get redirected to /workspaces. */
+  requireAdmin?: boolean;
+  /** If true, only allow Normal Users. System Admins get redirected to /admin/tenants. */
+  requireWorkspaceUser?: boolean;
 }
 
 /**
@@ -17,10 +21,13 @@ interface ProtectedRouteProps {
  *     original URL so we can send them back after a successful login.
  *  3. If requireVerified=true and the user hasn't verified their email,
  *     redirect to /verify-email.
+ *  4. Enforce Platform vs Workspace separation via requireAdmin/requireWorkspaceUser.
  */
 export default function ProtectedRoute({
   children,
   requireVerified = false,
+  requireAdmin = false,
+  requireWorkspaceUser = false,
 }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
@@ -55,6 +62,15 @@ export default function ProtectedRoute({
   // Authenticated but email not verified
   if (requireVerified && !user.is_verified) {
     return <Navigate to="/verify-email" state={{ email: user.email }} replace />;
+  }
+
+  // Enforce System Admin vs Normal User separation
+  if (requireAdmin && !user.is_system_admin) {
+    return <Navigate to="/workspaces" replace />;
+  }
+  
+  if (requireWorkspaceUser && user.is_system_admin) {
+    return <Navigate to="/admin/tenants" replace />;
   }
 
   return <>{children}</>;

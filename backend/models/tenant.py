@@ -4,9 +4,7 @@ from typing import List, Optional, TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
-    from backend.models.api_key import APIKey
-    from backend.models.document import Document
-    from backend.models.conversation import Conversation
+    from backend.models.workspace import Workspace
     from backend.models.user_tenant import UserTenantLink
     from backend.models.subscription import Subscription
 
@@ -31,16 +29,8 @@ class Tenant(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
     # Relationships
-    api_keys: List["APIKey"] = Relationship(
+    workspaces: List["Workspace"] = Relationship(
         back_populates="tenant", 
-        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
-    )
-    documents: List["Document"] = Relationship(
-        back_populates="tenant", 
-        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
-    )
-    conversations: List["Conversation"] = Relationship(
-        back_populates="tenant",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
     member_links: List["UserTenantLink"] = Relationship(

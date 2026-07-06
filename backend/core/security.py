@@ -4,15 +4,13 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 
 from backend.core.config import settings
 
 # ─── API Key Utilities (existing) ─────────────────────────────────────────────
 
 API_KEY_PREFIX = "omni_"
-
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def generate_api_key() -> str:
@@ -51,7 +49,8 @@ def hash_password(plain_password: str) -> str:
     Returns:
         bcrypt hash string safe for storage in the database.
     """
-    return _pwd_context.hash(plain_password)
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(plain_password.encode("utf-8"), salt).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -64,7 +63,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if the password matches, False otherwise.
     """
-    return _pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
 # ─── JWT Tokens ────────────────────────────────────────────────────────────────
@@ -86,17 +85,22 @@ def _create_token(data: dict[str, Any], expires_delta: timedelta) -> str:
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def create_access_token(user_id: str) -> str:
+def create_access_token(user_id: str, impersonate_tenant_id: str | None = None) -> str:
     """Creates a short-lived JWT access token for a user.
 
     Args:
         user_id: The UUID string of the authenticated user (becomes `sub` claim).
+        impersonate_tenant_id: Optional UUID string of a tenant to impersonate.
 
     Returns:
         Signed JWT access token string.
     """
+    data = {"sub": user_id, "type": "access"}
+    if impersonate_tenant_id:
+        data["impersonate_tenant_id"] = impersonate_tenant_id
+        
     return _create_token(
-        data={"sub": user_id, "type": "access"},
+        data=data,
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 

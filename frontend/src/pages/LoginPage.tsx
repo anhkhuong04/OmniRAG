@@ -54,9 +54,12 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       if (activeTab === "login") {
-        await login(email, password);
-        // Redirect to where the user originally wanted to go, or /workspaces
-        const from = (location.state as any)?.from?.pathname ?? "/workspaces";
+        const user = await login(email, password);
+        // Redirect based on user role
+        let from = (location.state as any)?.from?.pathname;
+        if (!from || from === "/login" || from === "/") {
+            from = user.is_system_admin ? "/admin/dashboard" : "/workspaces";
+        }
         navigate(from, { replace: true });
       } else {
         // Register flow

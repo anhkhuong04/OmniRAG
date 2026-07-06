@@ -98,7 +98,7 @@ class DocumentService:
 
     async def ingest_text(
         self,
-        tenant_id: str,
+        workspace_id: str,
         document_id: str,
         text: str,
         filename: str,
@@ -112,7 +112,7 @@ class DocumentService:
         DB session — do NOT call from an active HTTP request session.
 
         Args:
-            tenant_id: The tenant ID owning the document.
+            workspace_id: The tenant ID owning the document.
             document_id: The document ID for this ingestion batch.
             text: The raw text content to process.
             filename: The source filename, stored in chunk metadata for citation.
@@ -125,8 +125,8 @@ class DocumentService:
         chunks = self.split_text(text)
         if not chunks:
             logger.warning(
-                "No chunks produced for document_id='%s' (tenant='%s'). Skipping ingest.",
-                document_id, tenant_id,
+                "No chunks produced for document_id='%s' (workspace='%s'). Skipping ingest.",
+                document_id, workspace_id,
             )
             return 0, 0
 
@@ -138,18 +138,18 @@ class DocumentService:
 
         # Step 1: Upsert embeddings into Qdrant (dense search)
         prompt_tokens = await self._vector_service.upsert_chunks(
-            tenant_id=tenant_id,
+            workspace_id=workspace_id,
             document_id=document_id,
             chunks=chunks,
             metadata_list=metadata_list,
         )
 
         # Step 2: Persist chunks into PostgreSQL (sparse / full-text search)
-        tenant_uuid = uuid.UUID(tenant_id)
+        workspace_uuid = uuid.UUID(workspace_id)
         doc_uuid = uuid.UUID(document_id)
         db_chunks = [
             DocumentChunk(
-                tenant_id=tenant_uuid,
+                workspace_id=workspace_uuid,
                 document_id=doc_uuid,
                 text=chunk,
                 chunk_index=idx,
@@ -160,17 +160,18 @@ class DocumentService:
         db_session.add_all(db_chunks)
         await db_session.commit()
         logger.info(
-            "Stored %d chunks in Postgres for document='%s' (tenant='%s').",
-            len(db_chunks), document_id, tenant_id,
+            "Stored %d chunks in Postgres for document='%s' (workspace='%s').",
+            len(db_chunks), document_id, workspace_id,
         )
 
         # Step 3: Invalidate Semantic Cache for this tenant
-        await self._cache_service.invalidate_tenant_cache(tenant_id)
+        await self._cache_service.invalidate_tenant_cache(workspace_id)
 
         return len(chunks), prompt_tokens
 
     def run_ingestion_background(
         self,
+        workspace_id: str,
         tenant_id: str,
         document_id: str,
         text: str,
@@ -188,7 +189,7 @@ class DocumentService:
         before marking the document as "failed".
 
         Args:
-            tenant_id: The tenant ID owning the document.
+            workspace_id: The tenant ID owning the document.
             document_id: The document ID (must already exist in DB with status='pending').
             text: The raw text content to ingest.
             filename: The source filename for metadata.
@@ -200,6 +201,7 @@ class DocumentService:
         """
         task = asyncio.create_task(
             self._run_ingest_task(
+                workspace_id=workspace_id,
                 tenant_id=tenant_id,
                 document_id=document_id,
                 text=text,
@@ -213,6 +215,7 @@ class DocumentService:
 
     async def _run_ingest_task(
         self,
+        workspace_id: str,
         tenant_id: str,
         document_id: str,
         text: str,
@@ -239,7 +242,7 @@ class DocumentService:
                     doc_result = await session.execute(
                         select(Document).where(
                             Document.id == uuid.UUID(document_id),
-                            Document.tenant_id == uuid.UUID(tenant_id),
+                            Document.workspace_id == uuid.UUID(workspace_id),
                         )
                     )
                     doc = doc_result.scalar_one_or_none()
@@ -254,7 +257,7 @@ class DocumentService:
 
                     # Run the full pipeline
                     chunks_count, prompt_tokens = await self.ingest_text(
-                        tenant_id=tenant_id,
+                        workspace_id=workspace_id,
                         document_id=document_id,
                         text=text,
                         filename=filename,
@@ -273,7 +276,7 @@ class DocumentService:
                     
                     # Write immutable UsageLog entry
                     usage_log = UsageLog(
-                        tenant_id=uuid.UUID(tenant_id),
+                        workspace_id=uuid.UUID(workspace_id),
                         api_key_id=uuid.UUID(api_key_id) if api_key_id else None,
                         log_type=UsageLogType.INGEST,
                         document_id=uuid.UUID(document_id),
@@ -290,8 +293,8 @@ class DocumentService:
                     await plan_guard_service.increment_document_counter(session, tenant_id)
 
                 logger.info(
-                    "Background ingest completed: doc='%s', chunks=%d, tenant='%s'.",
-                    document_id, chunks_count, tenant_id,
+                    "Background ingest completed: doc='%s', chunks=%d, workspace='%s'.",
+                    document_id, chunks_count, workspace_id,
                 )
                 return  # Success — exit retry loop
 
@@ -310,7 +313,7 @@ class DocumentService:
                 doc_result = await session.execute(
                     select(Document).where(
                         Document.id == uuid.UUID(document_id),
-                        Document.tenant_id == uuid.UUID(tenant_id),
+                        Document.workspace_id == uuid.UUID(workspace_id),
                     )
                 )
                 doc = doc_result.scalar_one_or_none()
@@ -324,26 +327,26 @@ class DocumentService:
             logger.error("Failed to mark document %s as failed: %s", document_id, cleanup_exc)
 
         logger.error(
-            "Background ingest permanently failed for doc='%s' (tenant='%s'): %s",
-            document_id, tenant_id, last_error,
+            "Background ingest permanently failed for doc='%s' (workspace='%s'): %s",
+            document_id, workspace_id, last_error,
         )
 
     async def delete_document(
         self,
-        tenant_id: str,
+        workspace_id: str,
         document_id: str,
         db_session: AsyncSession,
     ) -> None:
         """Deletes all vectors and chunks associated with a document for a tenant.
 
         Args:
-            tenant_id: The tenant ID owning the document.
+            workspace_id: The tenant ID owning the document.
             document_id: The document ID to delete.
             db_session: Active async DB session for deleting Postgres chunks.
         """
         # Delete from Qdrant
         await self._vector_service.delete_document_vectors(
-            tenant_id=tenant_id,
+            workspace_id=workspace_id,
             document_id=document_id,
         )
 
@@ -351,32 +354,33 @@ class DocumentService:
         from sqlalchemy import delete as sa_delete
         await db_session.execute(
             sa_delete(DocumentChunk).where(
-                DocumentChunk.tenant_id == uuid.UUID(tenant_id),
+                DocumentChunk.workspace_id == uuid.UUID(workspace_id),
                 DocumentChunk.document_id == uuid.UUID(document_id),
             )
         )
         await db_session.commit()
         logger.info(
-            "Deleted document document_id='%s' from Qdrant and Postgres for tenant='%s'.",
-            document_id, tenant_id,
+            "Deleted document document_id='%s' from Qdrant and Postgres for workspace='%s'.",
+            document_id, workspace_id,
         )
 
         # Invalidate cache after deletion
-        await self._cache_service.invalidate_tenant_cache(tenant_id)
+        await self._cache_service.invalidate_tenant_cache(workspace_id)
 
     async def retry_ingestion(
         self,
+        workspace_id: str,
         tenant_id: str,
         document_id: str,
         api_key_id: Optional[str],
         db_session: AsyncSession,
     ) -> Document:
         """Retries ingestion for a failed document."""
-        tenant_uuid = uuid.UUID(tenant_id)
+        workspace_uuid = uuid.UUID(workspace_id)
         doc_uuid = uuid.UUID(document_id)
 
         result = await db_session.execute(
-            select(Document).where(Document.id == doc_uuid, Document.tenant_id == tenant_uuid)
+            select(Document).where(Document.id == doc_uuid, Document.workspace_id == workspace_uuid)
         )
         doc = result.scalar_one_or_none()
         if not doc:
@@ -404,6 +408,7 @@ class DocumentService:
         await db_session.commit()
 
         self.run_ingestion_background(
+            workspace_id=workspace_id,
             tenant_id=tenant_id,
             document_id=document_id,
             text=text,
@@ -414,17 +419,18 @@ class DocumentService:
 
     async def reindex_document(
         self,
+        workspace_id: str,
         tenant_id: str,
         document_id: str,
         api_key_id: Optional[str],
         db_session: AsyncSession,
     ) -> Document:
         """Re-indexes an existing document by deleting old vectors and chunks, then re-running ingestion."""
-        tenant_uuid = uuid.UUID(tenant_id)
+        workspace_uuid = uuid.UUID(workspace_id)
         doc_uuid = uuid.UUID(document_id)
 
         result = await db_session.execute(
-            select(Document).where(Document.id == doc_uuid, Document.tenant_id == tenant_uuid)
+            select(Document).where(Document.id == doc_uuid, Document.workspace_id == workspace_uuid)
         )
         doc = result.scalar_one_or_none()
         if not doc:
@@ -450,7 +456,7 @@ class DocumentService:
         await db_session.commit()
 
         # Clean up old vectors and chunks
-        await self.delete_document(tenant_id, document_id, db_session)
+        await self.delete_document(workspace_id, document_id, db_session)
 
         # Set back to pending so the background task can pick it up
         doc.status = "pending"
@@ -462,6 +468,7 @@ class DocumentService:
             text = f.read()
 
         self.run_ingestion_background(
+            workspace_id=workspace_id,
             tenant_id=tenant_id,
             document_id=document_id,
             text=text,

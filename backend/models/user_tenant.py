@@ -9,16 +9,18 @@ if TYPE_CHECKING:
     from backend.models.tenant import Tenant
 
 
-class WorkspaceRole(str, enum.Enum):
-    """Roles a user can hold within a Workspace (Tenant).
+class TenantRole(str, enum.Enum):
+    """Roles a user can hold within a Tenant (Organization).
 
-    - OWNER: Full control; can delete the workspace and manage billing.
-    - ADMIN: Can manage members, data sources, and API keys.
-    - MEMBER: Read-only access; can query the Knowledge Base.
+    - OWNER: Full control; can delete the tenant and manage billing.
+    - ADMIN: Can manage members, workspaces, and settings.
+    - BILLING_MANAGER: Can manage billing and subscription.
+    - MEMBER: Standard member, can access assigned workspaces.
     """
 
     OWNER = "owner"
     ADMIN = "admin"
+    BILLING_MANAGER = "billing_manager"
     MEMBER = "member"
 
 
@@ -42,7 +44,7 @@ class UserTenantLink(SQLModel, table=True):
     user_id: uuid.UUID = Field(foreign_key="users.id", primary_key=True)
     tenant_id: uuid.UUID = Field(foreign_key="tenants.id", primary_key=True)
 
-    role: WorkspaceRole = Field(default=WorkspaceRole.MEMBER, nullable=False)
+    role: TenantRole = Field(default=TenantRole.MEMBER, nullable=False)
     joined_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
     # Relationships

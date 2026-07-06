@@ -15,7 +15,10 @@ from backend.core.database import get_session
 from backend.core.security import decode_token, hash_api_key
 from backend.models.api_key import APIKey
 from backend.models.tenant import Tenant
+from backend.models.workspace import Workspace
 from backend.models.user import User
+from backend.models.user_tenant import UserTenantLink
+from backend.models.user_workspace import UserWorkspaceLink
 
 logger = logging.getLogger(__name__)
 
@@ -31,20 +34,21 @@ _http_bearer = HTTPBearer(auto_error=True)
 
 
 @dataclass
-class TenantContext:
-    """Carries both tenant_id and api_key_id so routes can log usage per key."""
+class WorkspaceContext:
+    """Carries workspace_id, tenant_id, and api_key_id for billing and isolation."""
 
+    workspace_id: str
     tenant_id: str
     api_key_id: str   # UUID string of the matched APIKey record
 
 
-async def get_tenant_context(
+async def get_workspace_context(
     session: DBSessionDep,
     credentials: Annotated[HTTPAuthorizationCredentials, Security(_http_bearer)],
-) -> TenantContext:
-    """Authenticates a request via Bearer API key and returns TenantContext.
+) -> WorkspaceContext:
+    """Authenticates a request via Bearer API key and returns WorkspaceContext.
 
-    Returns both tenant_id AND api_key_id — the api_key_id is required to
+    Returns workspace_id, tenant_id AND api_key_id — the api_key_id is required to
     write a UsageLog row attributing usage to a specific key for billing.
 
     Flow:
@@ -52,7 +56,7 @@ async def get_tenant_context(
         2. SHA-256 hash the token.
         3. Look up the hash in `api_keys` table.
         4. Verify the key is active.
-        5. Return TenantContext(tenant_id, api_key_id).
+        5. Return WorkspaceContext(workspace_id, tenant_id, api_key_id).
 
     Raises:
         401 Unauthorized: If the key is missing, invalid, or deactivated.
@@ -80,33 +84,38 @@ async def get_tenant_context(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Check if Tenant is active
-    tenant = await session.get(Tenant, api_key_record.tenant_id)
+    # Check if Workspace and Tenant are active
+    workspace = await session.get(Workspace, api_key_record.workspace_id)
+    if not workspace or not workspace.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Workspace has been disabled.",
+        )
+        
+    tenant = await session.get(Tenant, workspace.tenant_id)
     if not tenant or not tenant.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Workspace has been disabled by system administrator.",
+            detail="Organization has been disabled by system administrator.",
         )
 
-    return TenantContext(
-        tenant_id=str(api_key_record.tenant_id),
+    return WorkspaceContext(
+        workspace_id=str(api_key_record.workspace_id),
+        tenant_id=str(workspace.tenant_id),
         api_key_id=str(api_key_record.id),
     )
 
 
-async def get_current_tenant_id(
-    ctx: Annotated[TenantContext, Depends(get_tenant_context)],
+async def get_current_workspace_id(
+    ctx: Annotated[WorkspaceContext, Depends(get_workspace_context)],
 ) -> str:
-    """Backward-compatible wrapper — returns only tenant_id string.
-
-    Existing routes that use TenantIDDep continue to work unchanged.
-    """
-    return ctx.tenant_id
+    """Backward-compatible wrapper — returns only workspace_id string."""
+    return ctx.workspace_id
 
 
 # Annotated type aliases
-TenantIDDep = Annotated[str, Depends(get_current_tenant_id)]
-TenantContextDep = Annotated[TenantContext, Depends(get_tenant_context)]
+WorkspaceIDDep = Annotated[str, Depends(get_current_workspace_id)]
+WorkspaceContextDep = Annotated[WorkspaceContext, Depends(get_workspace_context)]
 
 
 # ─── Admin Authentication ──────────────────────────────────────────────────────
@@ -187,6 +196,9 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="This account has been deactivated.",
         )
+
+    # Attach impersonation details dynamically (not saved to DB)
+    object.__setattr__(user, "impersonate_tenant_id", payload.get("impersonate_tenant_id"))
 
     return user
 

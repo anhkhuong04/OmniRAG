@@ -50,7 +50,7 @@ async def create_api_key(
     """
     return await api_key_service.create_api_key(
         db=session,
-        tenant_id=str(workspace_id),
+        workspace_id=str(workspace_id),
         user_id=str(current_user.id),
         name=payload.name,
     )
@@ -68,7 +68,7 @@ async def list_api_keys(
     """
     return await api_key_service.list_api_keys(
         db=session,
-        tenant_id=str(workspace_id),
+        workspace_id=str(workspace_id),
         user_id=str(current_user.id),
     )
 

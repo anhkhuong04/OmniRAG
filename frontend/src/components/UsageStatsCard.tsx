@@ -1,5 +1,5 @@
 import React from "react";
-import { UsageStatsResponse } from "../services/api";
+import type { UsageStatsResponse } from "../services/api";
 
 interface UsageStatsCardProps {
   label: string;
@@ -166,7 +166,7 @@ export function UsageOverview({ stats }: UsageOverviewProps) {
 
 // ─── Usage History Chart ──────────────────────────────────────────────────────
 
-import { UsageHistoryResponse } from "../services/api";
+import type { UsageHistoryResponse } from "../services/api";
 
 export function UsageHistoryChart({ history }: { history: UsageHistoryResponse }) {
   if (!history || !history.history || history.history.length === 0) {

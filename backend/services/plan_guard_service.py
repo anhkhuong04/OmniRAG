@@ -152,10 +152,12 @@ async def check_storage_limit(db: AsyncSession, tenant_id: str, new_file_size_by
     if plan.max_storage_mb == -1:
         return  # Unlimited
 
-    # Sum existing document sizes
+    from backend.models.workspace import Workspace
+    # Sum existing document sizes across all workspaces of the tenant
     result = await db.execute(
         select(func.coalesce(func.sum(Document.file_size_bytes), 0))
-        .where(Document.tenant_id == uuid.UUID(tenant_id))
+        .join(Workspace, Document.workspace_id == Workspace.id)
+        .where(Workspace.tenant_id == uuid.UUID(tenant_id))
     )
     current_storage_bytes = result.scalar() or 0
     

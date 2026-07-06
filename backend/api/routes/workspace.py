@@ -3,7 +3,7 @@
 import logging
 import uuid
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, HTTPException
 
 from backend.api.dependencies import CurrentUserDep, DBSessionDep, VerifiedUserDep
 from backend.schemas.workspace import (
@@ -24,31 +24,27 @@ async def create_workspace(
     current_user: VerifiedUserDep,
     session: DBSessionDep,
 ):
-    """Creates a new Workspace for the authenticated, verified user.
+    """Creates a new Workspace for the authenticated, verified user within an organization.
 
-    The caller is automatically assigned the OWNER role.
-    A FREE plan subscription is auto-assigned to the new workspace.
-
-    Requires: valid JWT + verified email.
+    Requires: valid JWT + verified email + Tenant Admin/Owner role.
     """
+    if current_user.is_system_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="System Administrators operate at the platform level and cannot own or join workspaces.",
+        )
+        
     workspace = await workspace_service.create_workspace(session, payload, current_user)
-    logger.info(
-        "User %s created workspace '%s' (id=%s)",
-        current_user.id,
-        payload.name,
-        workspace.id,
-    )
     return workspace
 
 
 @router.get("", response_model=list[WorkspaceResponse])
-async def list_workspaces(current_user: CurrentUserDep, session: DBSessionDep):
-    """Returns all workspaces the authenticated user belongs to.
+async def list_workspaces(tenant_id: uuid.UUID, current_user: CurrentUserDep, session: DBSessionDep):
+    """Returns all workspaces the authenticated user belongs to within a specific tenant.
 
-    Includes the user's role within each workspace.
     Requires: valid JWT.
     """
-    return await workspace_service.get_user_workspaces(session, current_user.id)
+    return await workspace_service.list_workspaces(session, current_user, tenant_id)
 
 
 @router.get("/{workspace_id}", response_model=WorkspaceResponse)
@@ -63,7 +59,7 @@ async def get_workspace(
     Requires: valid JWT + membership.
     """
     return await workspace_service.get_workspace_detail(
-        session, workspace_id, current_user.id
+        session, workspace_id, current_user
     )
 
 
@@ -79,5 +75,5 @@ async def get_workspace_members(
     Requires: valid JWT + membership.
     """
     return await workspace_service.get_workspace_members(
-        session, workspace_id, current_user.id
+        session, workspace_id, current_user
     )

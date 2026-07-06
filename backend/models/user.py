@@ -5,15 +5,14 @@ from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
     from backend.models.user_tenant import UserTenantLink
-
+    from backend.models.user_workspace import UserWorkspaceLink
 
 class User(SQLModel, table=True):
     """Represents an authenticated user in the OmniRAG platform.
 
-    A single User can belong to multiple Workspaces (Tenants) via
-    the UserTenantLink join table. Authentication is handled via
-    hashed password (JWT flow) or future OAuth provider.
-
+    A single User can belong to multiple Tenants via UserTenantLink
+    and multiple Workspaces via UserWorkspaceLink.
+    
     Attributes:
         id: Unique identifier for the user.
         email: Unique email address used for login and verification emails.
@@ -44,7 +43,11 @@ class User(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
     # Relationships
-    workspace_links: List["UserTenantLink"] = Relationship(
+    tenant_links: List["UserTenantLink"] = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
+    workspace_links: List["UserWorkspaceLink"] = Relationship(
         back_populates="user",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )

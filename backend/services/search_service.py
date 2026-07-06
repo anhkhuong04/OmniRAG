@@ -78,14 +78,14 @@ class HybridSearchService:
 
     async def search(
         self,
-        tenant_id: str,
+        workspace_id: str,
         query: str,
         db_session: AsyncSession,
     ) -> list[dict[str, Any]]:
         """Performs a full hybrid search and returns the final ranked chunks.
 
         Args:
-            tenant_id: Mandatory tenant ID for data isolation in all sub-searches.
+            workspace_id: Mandatory workspace ID for data isolation in all sub-searches.
             query: The user's natural language query.
             db_session: An active async SQLAlchemy session for Postgres FTS.
 
@@ -97,14 +97,14 @@ class HybridSearchService:
 
         # 1. Dense Search from Qdrant
         dense_results = await self._vector_service.search_similar_chunks(
-            tenant_id=tenant_id,
+            workspace_id=workspace_id,
             query=query,
             limit=candidates_limit,
         )
 
         # 2. Sparse Search (Full-Text Search) from PostgreSQL
         sparse_results = await self._full_text_search(
-            tenant_id=tenant_id,
+            workspace_id=workspace_id,
             query=query,
             limit=candidates_limit,
             session=db_session,
@@ -114,7 +114,7 @@ class HybridSearchService:
         merged_candidates = self._reciprocal_rank_fusion(dense_results, sparse_results)
 
         if not merged_candidates:
-            logger.info("No results found from hybrid search for tenant='%s'.", tenant_id)
+            logger.info("No results found from hybrid search for workspace='%s'.", workspace_id)
             return []
 
         # 4. Rerank the merged candidates
@@ -127,13 +127,13 @@ class HybridSearchService:
         logger.info(
             "Hybrid search: dense=%d, sparse=%d, merged=%d, final=%d (tenant='%s').",
             len(dense_results), len(sparse_results), len(merged_candidates),
-            len(final_results), tenant_id,
+            len(final_results), workspace_id,
         )
         return final_results
 
     async def _full_text_search(
         self,
-        tenant_id: str,
+        workspace_id: str,
         query: str,
         limit: int,
         session: AsyncSession,
@@ -144,7 +144,7 @@ class HybridSearchService:
         Falls back to a LIKE query if FTS returns no results (ensures recall).
 
         Args:
-            tenant_id: Mandatory filter for tenant isolation.
+            workspace_id: Mandatory filter for workspace isolation.
             query: The raw user query string.
             limit: Maximum number of results to return.
             session: Active database session.
@@ -152,12 +152,12 @@ class HybridSearchService:
         Returns:
             A list of chunk dicts compatible with the format from VectorService.
         """
-        # SECURITY: tenant_id must always be in WHERE clause — use parameterized query
+        # SECURITY: workspace_id must always be in WHERE clause — use parameterized query
         sql = text(
             "SELECT dc.text, dc.chunk_index, dc.document_id::text, dc.source, "
             "ts_rank(to_tsvector('english', dc.text), plainto_tsquery('english', :query)) AS score "
             "FROM document_chunks dc "
-            "WHERE dc.tenant_id = CAST(:tenant_id AS uuid) "
+            "WHERE dc.workspace_id = CAST(:workspace_id AS uuid) "
             "AND to_tsvector('english', dc.text) @@ plainto_tsquery('english', :query) "
             "ORDER BY score DESC "
             "LIMIT :limit"
@@ -166,7 +166,7 @@ class HybridSearchService:
         try:
             result = await session.execute(
                 sql,
-                {"tenant_id": tenant_id, "query": query, "limit": limit},
+                {"workspace_id": workspace_id, "query": query, "limit": limit},
             )
             rows = result.fetchall()
 
@@ -180,11 +180,11 @@ class HybridSearchService:
                 }
                 for row in rows
             ]
-            logger.debug("Postgres FTS returned %d results for tenant='%s'.", len(chunks), tenant_id)
+            logger.debug("Postgres FTS returned %d results for workspace='%s'.", len(chunks), workspace_id)
             return chunks
 
         except Exception as e:
-            logger.warning("Postgres FTS failed for tenant='%s': %s. Returning empty list.", tenant_id, e)
+            logger.warning("Postgres FTS failed for workspace='%s': %s. Returning empty list.", workspace_id, e)
             # Rollback the aborted transaction so the session is usable again
             await session.rollback()
             return []
